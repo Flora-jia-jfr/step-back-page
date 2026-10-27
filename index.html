@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When should a research agent step back?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #faf8f3;
+  --card: #f2eee4;
+  --chart: #fcfcfb;
+  --ink: #1f1d1a;
+  --ink-2: #55524b;
+  --muted: #8b877d;
+  --rule: #e4dfd2;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --keep: #e2eeec;  --keep-ink: #0f5e57;
+  --back: #f6e5da;  --back-ink: #a8441f;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --fixed: #a8a69e;
+  --sans: "Figtree", "Helvetica Neue", Helvetica, sans-serif;
+  --serif: "Fraunces", Georgia, serif;
+  --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141412; --card: #1e1d1a; --chart: #1a1a19;
+  --ink: #efece5; --ink-2: #c4c0b5; --muted: #8b877d;
+  --rule: #302e29; --grid: #2c2c2a; --axis: #383835;
+  --keep: #12302d; --keep-ink: #6cc3b8;
+  --back: #3a2318; --back-ink: #ec9a74;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --fixed: #6b6a64;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.65; -webkit-font-smoothing: antialiased; counter-reset: sec; }
+a { color: inherit; text-decoration-color: var(--axis); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--back-ink); }
+.skip { position: absolute; left: -999px; } .skip:focus { left: 12px; top: 12px; z-index: 20; background: var(--bg); padding: 6px 10px; }
+
+/* nav */
+nav.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); }
+nav.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--rule); }
+nav.top .in { max-width: 960px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; gap: 24px; font-size: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; font-family: var(--serif); font-weight: 600; font-size: 17px; letter-spacing: -.01em; }
+.brand svg { display: block; }
+.brand small { font-family: var(--mono); font-weight: 400; font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
+nav.top a.l { text-decoration: none; color: var(--ink-2); position: relative; }
+nav.top a.l:hover { color: var(--ink); }
+nav.top a.l:hover::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 2px; background: var(--back-ink); border-radius: 2px; }
+#theme { background: none; border: 1px solid var(--rule); color: var(--ink-2); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 12px; }
+
+main { max-width: 960px; margin: 0 auto; padding: 0 28px; }
+section { padding: 64px 0 60px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 150px minmax(0, 1fr); column-gap: 36px; }
+section > * { grid-column: 2; }
+section > h2 { grid-column: 1 / -1; display: grid; grid-template-columns: 150px 1fr; column-gap: 36px; align-items: baseline; }
+section > h2::before { counter-increment: sec; content: counter(sec, decimal-leading-zero); font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--back-ink); letter-spacing: .04em; }
+
+/* hero */
+.hero { padding: 70px 0 64px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 44px; align-items: center; }
+.meta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .03em; margin-bottom: 18px; }
+.hero h1 { font-family: var(--serif); font-weight: 600; font-size: 50px; line-height: 1.07; letter-spacing: -.02em; margin-bottom: 20px; }
+.hero h1 em { font-style: normal; color: var(--back-ink); }
+.hero .sub { font-size: 18.5px; line-height: 1.6; color: var(--ink-2); }
+.forkfig { background: var(--card); border-radius: 14px; padding: 18px 16px 12px; }
+.forkfig figcaption { font-size: 12.5px; color: var(--muted); margin-top: 6px; text-align: center; }
+.rqs { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 42px; }
+.rqs li { border-top: 2px solid var(--ink); padding-top: 12px; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
+.rqs li b { display: block; font-family: var(--serif); font-weight: 600; font-size: 19px; color: var(--ink); margin-bottom: 4px; line-height: 1.3; }
+.rqs .q { font-family: var(--mono); font-size: 11.5px; color: var(--back-ink); letter-spacing: .06em; }
+.links { display: flex; gap: 18px; margin-top: 34px; font-size: 14.5px; flex-wrap: wrap; align-items: center; }
+.links a { text-decoration: none; color: var(--ink); font-weight: 500; border-bottom: 1.5px solid var(--back-ink); padding-bottom: 1px; }
+.links a::after { content: " →"; color: var(--back-ink); }
+.links .tgt { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+h2 { font-family: var(--serif); font-weight: 600; font-size: 30px; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 18px; }
+h3 { font-family: var(--serif); font-weight: 600; font-size: 20px; letter-spacing: -.005em; margin: 34px 0 8px; }
+p + p { margin-top: 14px; }
+.lede { color: var(--ink-2); font-size: 18.5px; margin-bottom: 22px; }
+b, strong { font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: .84em; background: var(--card); border-radius: 4px; padding: 1px 5px; }
+
+/* figures */
+figure { margin: 24px 0 8px; }
+figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; line-height: 1.5; }
+figcaption b { color: var(--ink); font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .03em; margin-right: 4px; }
+.box { background: var(--card); border-radius: 12px; padding: 16px 18px; }
+.box .lbl, .chainbox .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+
+/* 2x2 */
+.quad { display: grid; grid-template-columns: 88px 1fr 1fr; gap: 10px; }
+.quad .h { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 2px 2px; }
+.quad .h.k { color: var(--keep-ink); } .quad .h.b { color: var(--back-ink); }
+.quad .r { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; }
+.qc { border-radius: 12px; padding: 14px 16px; border: 1px solid transparent; }
+.qc.k { background: var(--keep); } .qc.b { background: var(--back); }
+.qc .t { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+.qc .t span { font-family: var(--serif); font-size: 22px; font-weight: 600; line-height: 1; }
+.qc.k .t span { color: var(--keep-ink); } .qc.b .t span { color: var(--back-ink); }
+.qc .d { font-size: 14px; color: var(--ink-2); margin-top: 4px; line-height: 1.45; }
+.stop { font-size: 14px; color: var(--ink-2); margin-top: 10px; padding-left: 98px; }
+
+/* tables */
+table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; }
+table.t th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; border-bottom: 1.5px solid var(--ink); }
+table.t td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.t td.n { font-weight: 600; white-space: nowrap; }
+table.t td .g, table.t td.g, .g { color: var(--ink-2); }
+.y { font-weight: 600; color: var(--keep-ink); } .no { color: var(--muted); }
+td.us, th.us { background: var(--back); padding-left: 10px !important; }
+th.us { color: var(--back-ink) !important; }
+
+/* two cards */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 22px; }
+.two .box ul { list-style: none; font-size: 14.5px; line-height: 1.5; }
+.two .box li { margin-top: 8px; padding-left: 14px; position: relative; }
+.two .box li::before { content: ""; position: absolute; left: 0; top: .68em; width: 6px; height: 6px; border-radius: 50%; background: var(--axis); }
+.two .box.b { background: var(--back); }
+.two .box.b li::before { background: var(--back-ink); }
+.two .box .cite { color: var(--muted); }
+
+.box ul.steps { list-style: none; margin-top: 4px; }
+.box ul.steps li { font-size: 15.5px; line-height: 1.55; margin-top: 8px; }
+.box .small { font-size: 13px; color: var(--muted); margin-top: 10px; }
+/* callout */
+.callout { border-left: 3px solid var(--back-ink); background: var(--back); border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 22px 0; font-size: 16px; }
+.callout .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--back-ink); margin-bottom: 4px; }
+blockquote { font-family: var(--serif); font-size: 18px; line-height: 1.45; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+.stat { border-top: 2px solid var(--ink); padding-top: 10px; }
+.stat .v { font-family: var(--serif); font-size: 34px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.stat .v small { font-size: 17px; color: var(--muted); font-weight: 500; }
+.stat .k { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
+
+/* charts */
+.chart-card { background: var(--chart); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px 10px; position: relative; }
+.chart-card .ct { font-weight: 600; font-size: 14.5px; }
+.chart-card .cs { font-size: 12.5px; color: var(--muted); }
+.legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); margin: 8px 0 2px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.viewtable { position: absolute; right: 12px; top: 12px; font: 500 11px/1 var(--mono); color: var(--muted); background: none; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; cursor: pointer; }
+.viewtable:hover { color: var(--ink); }
+table.dt { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0 6px; }
+table.dt th, table.dt td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+table.dt th { color: var(--muted); font-weight: 500; }
+.hidden { display: none; }
+svg text { font-family: var(--sans); }
+.mark:hover, .mark:focus { filter: brightness(1.08); outline: none; }
+#tip { position: fixed; pointer-events: none; background: var(--chart); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 10px; font: 12.5px/1.35 var(--sans); color: var(--ink-2); box-shadow: 0 4px 14px rgba(0,0,0,.08); opacity: 0; transition: opacity .1s; z-index: 30; }
+#tip .v { font-weight: 600; font-size: 15px; color: var(--ink); }
+#tip .key { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* RQ tag in tables */
+.pill { font-family: var(--mono); font-size: 11.5px; color: var(--back-ink); letter-spacing: .06em; }
+
+/* step chain */
+.chain { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13.5px; }
+.chip { border: 1px solid var(--rule); background: var(--bg); border-radius: 8px; padding: 5px 11px; }
+.chip i { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-right: 6px; }
+.chip.dark { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.k { background: var(--keep); border-color: transparent; color: var(--keep-ink); font-weight: 600; }
+.chip.b { background: var(--back); border-color: transparent; color: var(--back-ink); font-weight: 600; }
+.arrow { color: var(--muted); font-size: 12px; }
+.chainbox { background: var(--card); border-radius: 12px; padding: 14px 16px; margin-top: 10px; }
+
+/* timeline */
+.tl { font-size: 15px; }
+.tl .row { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--rule); position: relative; }
+.tl .w { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
+.tl .now .w { color: var(--back-ink); font-weight: 500; }
+.tl .now::before { content: ""; position: absolute; left: -16px; top: 18px; width: 7px; height: 7px; border-radius: 50%; background: var(--back-ink); }
+.gate { display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 11px; background: var(--back); color: var(--back-ink); border-radius: 6px; padding: 2px 8px; }
+
+footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); }
+
+@media (max-width: 820px) {
+  section { grid-template-columns: 1fr; } section > *, section > h2 { grid-column: 1; }
+  section > h2 { grid-template-columns: 1fr; } section > h2::before { margin-bottom: 4px; }
+  .hero-grid, .rqs, .two, .stats { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 38px; } .quad { grid-template-columns: 64px 1fr 1fr; } .stop { padding-left: 0; }
+  nav.top a.l { display: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="top"><div class="in">
+  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Step back <small>proposal v2</small></a>
+  <a class="l" href="#motivation">Motivation</a>
+  <a class="l" href="#preliminary">Preliminary results</a>
+  <a class="l" href="#questions">Questions</a>
+  <a class="l" href="#pilot">Pilot</a>
+  <a class="l" href="#next">Next steps</a>
+  <button id="theme" aria-label="Toggle dark theme">◐</button>
+</div></nav>
+
+<main id="main">
+<header class="hero" id="top">
+  <div class="hero-grid">
+    <div>
+      <div class="meta">Research proposal · v2 · 27 October 2026</div>
+      <h1>When should a research agent <em>step back</em>?</h1>
+      <p class="sub">An agent's answer is not good enough yet. It can analyze more, revise its model, collect more of the same data, or run an experiment that tells competing explanations apart. We measure, against ground truth and counterfactual runs, whether it knows what each of these is worth, and where that judgment breaks.</p>
+    </div>
+    <figure class="forkfig">
+      <svg viewBox="0 0 340 220" width="100%" role="img" aria-label="From one saved state, every next move is run">
+        <g font-family="var(--sans)" font-size="12.5">
+          <path d="M70 110 C 140 110, 150 22, 210 22" stroke="var(--axis)" stroke-width="2" fill="none"/>
+          <path d="M70 110 C 140 110, 150 66, 210 66" stroke="var(--keep-ink)" stroke-width="2" fill="none"/>
+          <path d="M70 110 C 140 110, 150 110, 210 110" stroke="var(--back-ink)" stroke-width="2" fill="none"/>
+          <path d="M70 110 C 140 110, 150 154, 210 154" stroke="var(--keep-ink)" stroke-width="2" fill="none"/>
+          <path d="M70 110 C 140 110, 150 198, 210 198" stroke="var(--back-ink)" stroke-width="2" fill="none"/>
+          <circle cx="58" cy="110" r="13" fill="var(--ink)"/>
+          <text x="58" y="141" text-anchor="middle" fill="var(--ink-2)" font-size="11.5">saved state</text>
+          <g font-weight="600">
+            <circle cx="214" cy="22" r="4.5" fill="var(--axis)"/><text x="226" y="26" fill="var(--ink)">STOP</text>
+            <circle cx="214" cy="66" r="4.5" fill="var(--keep-ink)"/><text x="226" y="70" fill="var(--ink)">A <tspan font-weight="400" fill="var(--ink-2)">analyze more</tspan></text>
+            <circle cx="214" cy="110" r="4.5" fill="var(--back-ink)"/><text x="226" y="114" fill="var(--ink)">R <tspan font-weight="400" fill="var(--ink-2)">revise model</tspan></text>
+            <circle cx="214" cy="154" r="4.5" fill="var(--keep-ink)"/><text x="226" y="158" fill="var(--ink)">D <tspan font-weight="400" fill="var(--ink-2)">same data</tspan></text>
+            <circle cx="214" cy="198" r="4.5" fill="var(--back-ink)"/><text x="226" y="202" fill="var(--ink)">X <tspan font-weight="400" fill="var(--ink-2)">diagnostic</tspan></text>
+          </g>
+        </g>
+      </svg>
+      <figcaption>From one saved moment, run every move and score it against the best possible answer.</figcaption>
+    </figure>
+  </div>
+  <ol class="rqs">
+    <li><span class="q">Q1</span><b>Does it know what each step is worth?</b>Which one helps more, and by how much, relative to the price.</li>
+    <li><span class="q">Q2</span><b>Where does the call break?</b>In the estimate, in the choice, or in carrying the step out.</li>
+    <li><span class="q">Q3</span><b>Is there room for judgment?</b>Or do simple fixed policies already come close? Reported either way.</li>
+    <li><span class="q">Q4</span><b>Can it be repaired?</b>If it ranks well but misjudges size, does value calibration fix the choice?</li>
+  </ol>
+  <div class="links"><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/proposal.md">Full proposal</a><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/zh/proposal_zh.md">中文版</a><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/thought_process.md">How we got here</a><span class="tgt">target ICML 2027 · fallback NeurIPS 2027</span></div>
+</header>
+
+<!-- ============ the decision ============ -->
+<section id="decision">
+  <h2>The decision</h2>
+  <p class="lede">Every analysis reaches a point where the answer is still uncertain. The next step falls into one of four cells, or the agent stops.</p>
+  <figure>
+    <div class="quad">
+      <div></div><div class="h k">keep the current model</div><div class="h b">step back: revise the model</div>
+      <div class="r">existing data</div>
+      <div class="qc k"><div class="t"><span>A</span>Analyze more</div><div class="d">tune, search, check the fit</div></div>
+      <div class="qc b"><div class="t"><span>R</span>Revise the model</div><div class="d">test the assumptions, propose another mechanism</div></div>
+      <div class="r">new data</div>
+      <div class="qc k"><div class="t"><span>D</span>More of the same data</div><div class="d">more records of the kind already collected</div></div>
+      <div class="qc b"><div class="t"><span>X</span>Diagnostic experiment</div><div class="d">data that can tell the current model from an alternative</div></div>
+    </div>
+    <div class="stop">… or stop.</div>
+    <figcaption><b>Figure 1.</b> Four remedies. The right column is what we mean by stepping back. Analysis has no price in money, but every policy shares one finite analysis budget; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
+  </figure>
+
+  <h3>Same first answer, four different right moves</h3>
+  <p>An analyst asks whether a drug lowers blood pressure, using records from two hospitals, and must predict its effect in an older population. The working model is <i>the same effect for every patient, after adjusting for severity</i>. What should come next depends on what is actually true:</p>
+  <figure>
+    <table class="t">
+      <tr><th style="width:46%">What is actually true</th><th>What helps</th></tr>
+      <tr><td>The model is right; the estimate is only noisy</td><td><b>D</b> or stop <span class="g">— rethinking may keep the simple model or add false structure</span></td></tr>
+      <tr><td>The drug works better in older patients</td><td><b>R</b> if it already shows, else <b>X</b> <span class="g">— recruit older patients</span></td></tr>
+      <tr><td>Sicker patients were treated more often</td><td><b>X</b> <span class="g">— a small randomized batch; reanalysis can hedge but not remove the bias</span></td></tr>
+      <tr><td>One hospital's lab reads high</td><td><b>R</b> or <b>X</b> <span class="g">— re-test samples at a reference lab</span></td></tr>
+    </table>
+    <figcaption><b>Table 1.</b> The right move depends on the hidden truth, and also on how much this agent has already got out of the data.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ motivation ============ -->
+<section id="motivation">
+  <h2>Motivation</h2>
+  <p class="lede">We already know research agents get stuck. What we do not know is how they value their next step, and where that judgment fails.</p>
+  <div class="two">
+    <div class="box"><div class="lbl">known</div><ul>
+      <li>Research agents keep tuning when they should rethink <span class="cite">(ResearchGym; "frame-lock" in AutoResearch)</span>, judged from traces afterwards.</li>
+      <li>Decision methods compare candidates by running them. LLM-IDEA runs every candidate experiment from the same data and reports regret; Outgrow a Theory learns when and how to revise a model class.</li>
+    </ul></div>
+    <div class="box b"><div class="lbl">missing</div><ul>
+      <li>In those methods a fixed criterion or a learned policy makes the choice, and only one kind of remedy is compared.</li>
+      <li>Nobody has scored an LLM agent's own estimates and choices against the realized value of different kinds of remedies from the same state.</li>
+    </ul></div>
+  </div>
+  <p>Those methods build better decision mechanisms. We ask how existing agents judge the next step: do they know which remedy helps more, by how much, do they act on it, and do they carry it out?</p>
+  <figure>
+    <table class="t">
+      <tr><th style="width:34%"></th><th>Observe traces</th><th>Decision methods</th><th>Fork one state</th><th class="us">This work</th></tr>
+      <tr><td>Run several moves from the same state</td><td class="no">no</td><td class="y">yes, experiments</td><td class="y">yes</td><td class="y us">yes</td></tr>
+      <tr><td>Know the best possible answer</td><td class="no">no</td><td class="y">yes</td><td class="no">no</td><td class="y us">yes</td></tr>
+      <tr><td>Compare four kinds of remedy</td><td class="no">after the fact</td><td class="no">one kind</td><td class="no">no</td><td class="y us">yes</td></tr>
+      <tr><td>Score the LLM's own estimates and choices</td><td class="no">no</td><td class="no">no</td><td class="no">outside controller</td><td class="y us">yes</td></tr>
+    </table>
+    <figcaption><b>Table 2.</b> Observe: ResearchGym, AutoResearch, AARRI-Bench. Decision methods: LLM-IDEA (its §5.9 runs each candidate experiment from the same data), Learning to Outgrow a Theory. Fork: SURE-Act, PORA, DIAL. The closest setting, ACED-Bench, hides a causal model behind natural-language scenarios but reports only failure modes.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ preliminary ============ -->
+<section id="preliminary">
+  <h2>Preliminary results</h2>
+  <p class="lede">In one sentence: Claude knows roughly where new data would help, but thinks they help several times less than they do, so it stops too early.</p>
+
+  <div class="box">
+    <div class="lbl">what we ran</div>
+    <ul class="steps">
+      <li><b>The task.</b> A black box with six on/off switches. Each press lights a lamp with a hidden probability that depends on the switches. The agent sees records for half of the switch settings and must predict the lamp's probability for the other half. We know the true probabilities, so every answer can be scored exactly.</li>
+      <li><b>The moments.</b> 24 saved moments, each right after Claude (Sonnet 5.5) gave its first answer: 12 tasks, each in two versions of the task text.</li>
+      <li><b>At each moment, from the same saved copy:</b> we asked Claude how much 32 more records would lower its error, and what it would do at three data prices (in copies we then threw away). Separately, we actually gave it the 32 records, and let it re-analyze the same data for up to four more rounds, and measured how much the error really changed.</li>
+    </ul>
+    <p class="small">One model, two runs per branch, small sample: read only the direction.</p>
+  </div>
+
+  <h3>1 · It knows where data help, not how much</h3>
+  <figure>
+    <div class="chart-card" id="c1">
+      <button class="viewtable" data-for="c1">table</button>
+      <div class="ct">Claude's estimate against the actual gain from 32 more records</div>
+      <div class="cs">Each dot is one of the 24 moments. On the diagonal the estimate would be exactly right.</div>
+      <div class="chart"></div><div class="tablewrap hidden"></div>
+    </div>
+    <figcaption><b>Figure 2.</b> Gain = how much the prediction error drops. Error is the mean squared error of the predicted probabilities: an error of 0.01 means the predictions are off by about 10 percentage points on average. The lines at 0.012 mark the data price: data are worth buying to the right of the vertical line, and Claude buys only above the horizontal one. The shaded corner holds the moments where data were worth buying but Claude's estimate said no. An ideal statistician's estimate of the same gains, not shown, is close to the actual ones.</figcaption>
+  </figure>
+  <div class="stats">
+    <div class="stat"><div class="v">4–10×</div><div class="k">how much it underestimated the largest gains</div></div>
+    <div class="stat"><div class="v">0<small> of 3</small></div><div class="k">moments worth buying at this price where it bought</div></div>
+    <div class="stat"><div class="v">68<small> of 72</small></div><div class="k">decisions were "stop", the same as a rule that always stops</div></div>
+  </div>
+  <p>The order is mostly right: sorted by Claude's estimate, the moments where data really helped come first (AUC 0.88). The size is wrong, and Claude acts on its own estimates (71 of 72 decisions), so it stops. That is why we measure ranking and size separately, and why the pilot tests whether calibrating the size fixes the choice.</p>
+
+  <h3>2 · Re-analyzing the same data is cheap and usually worth it</h3>
+  <figure>
+    <div class="chart-card" id="c2">
+      <button class="viewtable" data-for="c2">table</button>
+      <div class="ct">Total loss: prediction error plus the cost of any data bought (lower is better)</div>
+      <div class="cs">Re-analysis costs nothing; data price 0.012</div>
+      <div class="chart"></div><div class="tablewrap hidden"></div>
+    </div>
+    <figcaption><b>Figure 3.</b> "Best choice in each case" picks, after the fact, the best of stop, re-analyze and buy data for each moment, so it is an upper bound. With plenty of data, always re-analyzing is almost as good. With little data it is not: some moments can only be fixed by new data.</figcaption>
+  </figure>
+
+  <h3>3 · It saw what it could not test</h3>
+  <div class="callout">
+    <div class="lbl">why the pilot needs a new toy</div>
+    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "step back and test an assumption" was impossible in this toy. The pilot's toy causal model (§05) is built so that it is possible.</p>
+  </div>
+</section>
+
+<!-- ============ questions ============ -->
+<section id="questions">
+  <h2>Goal and questions</h2>
+  <p class="lede">The goal is to measure, against ground truth and counterfactual runs, how well an agent judges what each next step is worth, and where that judgment breaks.</p>
+  <table class="t">
+    <tr><th style="width:70px"></th><th>Question</th><th style="width:38%">How we read it</th></tr>
+    <tr><td><span class="pill">Q1</span></td><td><b>Does it know what each remedy is worth?</b><br><span class="g">ranking · size · relative to the price</span></td><td class="g">its estimates against realized gains: rank, and calibration of size</td></tr>
+    <tr><td><span class="pill">Q2</span></td><td><b>Where does the call break?</b><br><span class="g">in the estimate · in the choice · in the execution</span></td><td class="g">choice against its own estimates; assigned branch against what it actually did</td></tr>
+    <tr><td><span class="pill">Q3</span></td><td><b>Is there room for judgment?</b><br><span class="g">or do fixed policies (always review, fit every model up front) come close?</span></td><td class="g">fixed policies against the best per-state choice; reported either way</td></tr>
+    <tr><td><span class="pill">Q4</span></td><td><b>Can it be repaired?</b><br><span class="g">value calibration: feedback on practice states, or an outside rescaling</span></td><td class="g">regret on new seeds, at matched cost, with no extra false structure</td></tr>
+  </table>
+
+  <h3>How one state is measured</h3>
+  <div class="chainbox"><div class="lbl">from one saved moment</div>
+    <div class="chain">
+      <span class="chip"><i>1</i>first analysis window</span><span class="arrow">→</span>
+      <span class="chip dark">save</span><span class="arrow">→</span>
+      <span class="chip"><i>2</i>ask, then discard: which move? what would each gain?</span>
+    </div>
+  </div>
+  <div class="chainbox"><div class="lbl">run every branch from the save, to the end of the budget, twice</div>
+    <div class="chain">
+      <span class="chip">STOP</span><span class="chip k">A</span><span class="chip b">R</span><span class="chip k">D</span><span class="chip b">X</span><span class="arrow">→</span>
+      <span class="chip"><i>3</i>record each remedy's realized gain, with its spread</span><span class="arrow">→</span>
+      <span class="chip"><i>4</i>compare with its estimates, its choice and what it actually did</span>
+    </div>
+  </div>
+  <p style="margin-top:16px">The agent decides when its first window ends, and all policies share the same analysis budget. A and R are prompts, so we record both the branch assigned and what the agent actually did. Three prompt conditions (neutral, generic review, framework review) show whether a prompt fixes a failure at this budget; none names a mechanism. A remedy counts as best in a state only when it clearly beats the next one.</p>
+</section>
+
+<!-- ============ pilot ============ -->
+<section id="pilot">
+  <h2>Pilot: a toy causal model</h2>
+  <p class="lede">A small model built for this question. It only generates the data; the agent's task is prediction, not causal discovery.</p>
+  <div class="box"><div class="lbl">setup</div>
+    <p style="font-size:16.5px">Records from two sites: age <code>A</code>, a baseline score <code>S</code>, treated or not <code>T</code>, outcome <code>Y</code>. Predict the mean outcome with and without treatment in an <b>older</b> target population, as measured by a reference lab.</p>
+  </div>
+  <figure>
+    <table class="t">
+      <tr><th style="width:27%">Hidden truth</th><th style="width:34%">Sign in the existing data</th><th>Diagnostic experiment (X)</th></tr>
+      <tr><td class="n">F0 · simple model is right</td><td class="g">nothing beyond noise</td><td class="g">not needed, though a randomized batch may add precision; revising may keep the simple model or add false structure</td></tr>
+      <tr><td class="n">F1 · effect changes with age</td><td class="g">a weak treatment × age interaction</td><td class="g">recruit units in the target age range</td></tr>
+      <tr><td class="n">F2 · confounding</td><td class="g">S differs between treated and untreated</td><td class="g">a randomized batch; observational data cannot identify the bias, so revising can only hedge</td></tr>
+      <tr><td class="n">F3 · one lab reads high</td><td class="g">a site difference, which could also be real</td><td class="g">re-test stored samples at the reference lab</td></tr>
+    </table>
+    <figcaption><b>Table 3.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. The ideal observer averages over F0–F3 (closed form except one one-dimensional integral). Every task offers every option, whatever the truth.</figcaption>
+  </figure>
+  <div class="two">
+    <div class="box"><div class="lbl">why causal</div><ul>
+      <li>"More of the same data cannot settle it" holds by theory: unmeasured confounding and a real effect fit observational data equally well.</li>
+      <li>Each way of going wrong needs its own kind of evidence, so the remedies have clearly different values from state to state.</li>
+    </ul></div>
+    <div class="box"><div class="lbl">why build our own</div><ul>
+      <li>We need look-alike truths, an exact ideal observer and all four remedies together.</li>
+      <li>BoxingGym has one fixed model per environment and no reanalysis action; ACED-Bench does not run remedies from one state.</li>
+    </ul></div>
+  </div>
+
+  <h3>Plan and stopping rules</h3>
+  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, second runs, controls, the prompt conditions, a start from another run's saved state, and the value-calibration repair on new seeds.</p>
+  <figure>
+    <table class="t">
+      <tr><th style="width:48%">We stop or change course if…</th><th>Then</th></tr>
+      <tr><td>one remedy has the largest gain in almost every state</td><td class="g">recalibrate the toy once; stop if still one-sided</td></tr>
+      <tr><td>the best fixed policy ≈ the best per-state choice</td><td class="g">report it; the main line stops</td></tr>
+      <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
+    </table>
+    <figcaption><b>Table 4.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ next ============ -->
+<section id="next">
+  <h2>Next steps</h2>
+  <div class="tl">
+    <div class="row now"><div class="w">28 Oct – 3 Nov</div><div>Build the toy: data generator, ideal observer, calibration simulations, tests</div></div>
+    <div class="row"><div class="w">4 – 10 Nov</div><div>Pilot Stage 0 <span class="gate">decide: go or stop · ICML or NeurIPS · application</span></div></div>
+    <div class="row"><div class="w">11 – 24 Nov</div><div>Application environment; the leading candidate is a richer causal setting, such as a multi-site clinical study</div></div>
+    <div class="row"><div class="w">25 Nov – 5 Jan</div><div>Main experiments with three or more agents, including a weaker one</div></div>
+    <div class="row"><div class="w">6 – 17 Jan</div><div>Fixed-policy baselines, the value-calibration repair, transfer (switch box; BoxingGym with a wrong starting model)</div></div>
+    <div class="row"><div class="w">18 Jan →</div><div>Writing</div></div>
+  </div>
+</section>
+</main>
+
+<footer>Research proposal v2, 27 October 2026. Source: <a href="https://github.com/Flora-jia-jfr/step-back/blob/main/proposal.md">proposal.md</a> · <a href="https://github.com/Flora-jia-jfr/step-back/blob/main/zh/proposal_zh.md">zh/proposal_zh.md</a> · preliminary runs in <code>runs/</code>.</footer>
+<div id="tip" role="status"></div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const tip = document.getElementById('tip');
+function el(n, a, p) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+function txt(p, x, y, s, a = {}) { const t = el('text', Object.assign({ x, y }, a), p); t.textContent = s; return t; }
+function showTip(e, rows) {
+  tip.replaceChildren();
+  rows.forEach(([v, label, color]) => {
+    const val = document.createElement('div'); val.className = 'v'; val.textContent = v;
+    const lab = document.createElement('div');
+    const k = document.createElement('span'); k.className = 'key'; k.style.background = color; lab.appendChild(k);
+    lab.appendChild(document.createTextNode(label));
+    tip.append(val, lab);
+  });
+  tip.style.opacity = 1; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 12) + 'px';
+}
+function bindTip(node, rows) {
+  node.setAttribute('tabindex', '0'); node.classList.add('mark');
+  node.addEventListener('pointermove', e => showTip(e, rows));
+  node.addEventListener('pointerleave', () => tip.style.opacity = 0);
+  node.addEventListener('focus', () => { const b = node.getBoundingClientRect(); showTip({ clientX: b.right, clientY: b.top }, rows); });
+  node.addEventListener('blur', () => tip.style.opacity = 0);
+}
+function hbar(p, x0, y, w, h, fill) {
+  const r = Math.min(4, w);
+  return el('path', { d: `M${x0},${y} H${x0 + w - r} Q${x0 + w},${y} ${x0 + w},${y + r} V${y + h - r} Q${x0 + w},${y + h} ${x0 + w - r},${y + h} H${x0} Z`, fill }, p);
+}
+const PTS = [["Main effect · 32 records", "C-s22", 0.048, 0.0053, 0.0427, "STOP"], ["Main effect · 32 records · hint", "C-s22", 0.0368, 0.005, 0.0269, "STOP"], ["No effect · 32 records · hint", "A-s22", 0.0137, 0.01, 0.0186, "STOP"], ["Main effect · 128 records · hint", "C-s21", 0.0117, 0.0023, 0.0134, "STOP"], ["Main effect · 128 records", "C-s21", 0.0109, 0.0027, 0.015, "STOP"], ["Main effect + interaction · 32 records", "D-s22", 0.0065, 0.0173, 0.0482, "ANALYZE"], ["Main effect · 128 records · hint", "C-s20", 0.0058, 0.0047, 0.022, "STOP"], ["No effect · 32 records", "A-s22", 0.0025, 0.006, 0.0141, "STOP"], ["Main effect + interaction · 128 records", "D-s21", 0.0025, 0.003, 0.0088, "STOP"], ["Interaction · 128 records", "B-s21", 0.0017, 0.0017, 0.0074, "STOP"], ["Interaction · 128 records · hint", "B-s21", 0.0016, 0.0012, 0.0035, "STOP"], ["Main effect + interaction · 32 records · hint", "D-s22", 0.0016, 0.01, 0.0283, "STOP"], ["Interaction · 128 records · hint", "B-s20", 0.0001, 0.002, 0.0023, "STOP"], ["Main effect · 128 records", "C-s20", -0.0004, 0.0033, 0.0029, "STOP"], ["Interaction · 128 records", "B-s20", -0.0005, 0.0008, 0.0177, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s20", -0.0005, 0.001, 0.0014, "STOP"], ["Main effect + interaction · 128 records", "D-s20", -0.0006, 0.002, 0.0006, "STOP"], ["No effect · 128 records · hint", "A-s20", -0.001, 0.0018, 0.0031, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s21", -0.0012, 0.001, 0.0025, "STOP"], ["No effect · 128 records", "A-s21", -0.002, 0.0018, 0.0012, "STOP"], ["No effect · 128 records", "A-s20", -0.0031, 0.002, 0.0017, "STOP"], ["No effect · 128 records · hint", "A-s21", -0.0033, 0.0012, 0.0012, "STOP"], ["Interaction · 32 records · hint", "B-s22", -0.005, 0.0035, 0.0088, "STOP"], ["Interaction · 32 records", "B-s22", -0.01, 0.003, 0.0035, "STOP"]];
+const D2 = [
+  { name: 'Plenty of data (128 records)', rows: [['Always stop', 0.0095, false], ['Always re-analyze (4 rounds)', 0.0064, false], ['Best choice in each case', 0.0059, true]] },
+  { name: 'Little data (32 records)', rows: [['Always stop', 0.0243, false], ['Always re-analyze (4 rounds)', 0.0212, false], ['Best choice in each case', 0.0130, true]] },
+];
+function grid(svg, xs, top, bottom, max, step, H, digits) {
+  for (let t = 0; t <= max + 1e-9; t += step) {
+    el('line', { x1: xs(t), x2: xs(t), y1: top, y2: bottom, stroke: css('--grid'), 'stroke-width': 1 }, svg);
+    txt(svg, xs(t), H - 6, t.toFixed(digits), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'middle', 'font-variant-numeric': 'tabular-nums' });
+  }
+}
+function chart1(host) {
+  const W = 780, L = 70, R = 24, T = 14, B = 52, PRICE = 0.012;
+  const x0 = -0.012, x1 = 0.05, y0 = 0, y1 = 0.03;
+  const pw = W - L - R, k = pw / (x1 - x0), ph = (y1 - y0) * k, H = T + ph + B;
+  const X = v => L + (v - x0) * k, Y = v => T + ph - (v - y0) * k;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': "Claude's estimated data gain against the actual gain for 24 moments" });
+  // shaded corner: worth buying, estimate says no
+  el('rect', { x: X(PRICE), y: Y(PRICE), width: X(x1) - X(PRICE), height: Y(0) - Y(PRICE), fill: css('--back') }, svg);
+  txt(svg, X(x1) - 8, Y(PRICE) + 18, 'worth buying, but its estimate said no', { 'font-size': 12, fill: css('--back-ink'), 'text-anchor': 'end', 'font-weight': 600 });
+  for (let t = -0.01; t <= x1 + 1e-9; t += 0.01) {
+    el('line', { x1: X(t), x2: X(t), y1: T, y2: T + ph, stroke: css('--grid') }, svg);
+    txt(svg, X(t), T + ph + 18, t.toFixed(2), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'middle', 'font-variant-numeric': 'tabular-nums' });
+  }
+  for (let t = 0; t <= y1 + 1e-9; t += 0.01) {
+    el('line', { x1: L, x2: L + pw, y1: Y(t), y2: Y(t), stroke: css('--grid') }, svg);
+    txt(svg, L - 8, Y(t) + 4, t.toFixed(2), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'end', 'font-variant-numeric': 'tabular-nums' });
+  }
+  el('line', { x1: X(0), x2: X(0), y1: T, y2: T + ph, stroke: css('--axis') }, svg);
+  // price lines
+  el('line', { x1: X(PRICE), x2: X(PRICE), y1: T, y2: T + ph, stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
+  el('line', { x1: L, x2: L + pw, y1: Y(PRICE), y2: Y(PRICE), stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
+  txt(svg, X(PRICE) + 6, T + 12, 'data price', { 'font-size': 11.5, fill: css('--back-ink') });
+  // diagonal
+  el('line', { x1: X(0), y1: Y(0), x2: X(y1), y2: Y(y1), stroke: css('--ink-2'), 'stroke-width': 1.2 }, svg);
+  txt(svg, X(0.022) - 6, Y(0.022) - 6, 'estimate = actual', { 'font-size': 11.5, fill: css('--ink-2'), 'text-anchor': 'end' });
+  // axis titles
+  txt(svg, L + pw / 2, H - 8, 'actual gain from 32 more records', { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
+  const yt = txt(svg, 16, T + ph / 2, "Claude's estimate", { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
+  yt.setAttribute('transform', `rotate(-90 16 ${T + ph / 2})`);
+  // points
+  PTS.forEach(([lab, id, act, est, ideal, choice]) => {
+    const g = el('g', {}, svg);
+    el('circle', { cx: X(act), cy: Y(est), r: 9, fill: 'transparent' }, g);
+    el('circle', { cx: X(act), cy: Y(est), r: 5, fill: css('--s1'), stroke: css('--chart'), 'stroke-width': 2 }, g);
+    bindTip(g, [[`actual ${act.toFixed(4)}`, lab, css('--s1')], [`estimate ${est.toFixed(4)}`, `ideal reference ${ideal.toFixed(4)} · chose ${choice.toLowerCase()} at this price`, css('--s1')]]);
+  });
+  host.replaceChildren(svg);
+}
+function chart2(host) {
+  const W = 780, labW = 210, padR = 60, bh = 16, rg = 8, pg = 22, hh = 22, ph = hh + 3 * bh + 2 * rg;
+  const H = 2 * ph + pg + 26, max = 0.025, xs = v => labW + v / max * (W - labW - padR);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Fixed policies against the best per-state choice' });
+  grid(svg, xs, hh - 4, H - 24, max, 0.005, H, 3);
+  D2.forEach((p, pi) => {
+    const y0 = pi * (ph + pg);
+    txt(svg, labW, y0 + 13, p.name, { 'font-size': 12.5, 'font-weight': 600, fill: css('--ink') });
+    el('line', { x1: labW, x2: labW, y1: y0 + hh - 4, y2: y0 + ph, stroke: css('--axis') }, svg);
+    p.rows.forEach(([name, v, best], ri) => {
+      const y = y0 + hh + ri * (bh + rg), c = best ? css('--s1') : css('--fixed'), hit = el('g', {}, svg);
+      txt(svg, labW - 10, y + bh / 2 + 4, name, { 'font-size': 12.5, fill: best ? css('--ink') : css('--ink-2'), 'text-anchor': 'end', 'font-weight': best ? 600 : 400 });
+      el('rect', { x: labW, y: y - 2, width: W - labW - padR, height: bh + 4, fill: 'transparent' }, hit);
+      hbar(hit, labW, y, xs(v) - labW, bh, c);
+      bindTip(hit, [[v.toFixed(4), `${name} · ${p.name}`, c]]);
+      txt(svg, xs(v) + 6, y + bh / 2 + 4, v.toFixed(4), { 'font-size': 11.5, fill: css('--ink-2'), 'font-variant-numeric': 'tabular-nums' });
+    });
+  });
+  host.replaceChildren(svg);
+}
+function table(host, head, rows) {
+  const t = document.createElement('table'); t.className = 'dt';
+  const hr = t.insertRow(); head.forEach(h => { const c = document.createElement('th'); c.textContent = h; hr.appendChild(c); });
+  rows.forEach(r => { const tr = t.insertRow(); r.forEach(v => { tr.insertCell().textContent = v; }); });
+  host.replaceChildren(t);
+}
+function draw() {
+  chart1(document.querySelector('#c1 .chart'));
+  table(document.querySelector('#c1 .tablewrap'), ['Moment', 'Actual gain', "Claude's estimate", 'Ideal reference', 'Choice at 0.012'], PTS.map(([lab, id, a, e, i, c]) => [`${lab} (${id})`, a.toFixed(4), e.toFixed(4), i.toFixed(4), c.toLowerCase()]));
+  chart2(document.querySelector('#c2 .chart'));
+  table(document.querySelector('#c2 .tablewrap'), ['Policy', 'Plenty of data (128)', 'Little data (32)'], D2[0].rows.map((r, i) => [r[0], r[1].toFixed(4), D2[1].rows[i][1].toFixed(4)]));
+}
+document.querySelectorAll('.viewtable').forEach(b => b.addEventListener('click', () => {
+  const card = document.getElementById(b.dataset.for), tw = card.querySelector('.tablewrap'), ch = card.querySelector('.chart');
+  const toTable = tw.classList.contains('hidden');
+  tw.classList.toggle('hidden', !toTable); ch.classList.toggle('hidden', toTable); b.textContent = toTable ? 'chart' : 'table';
+}));
+const root = document.documentElement;
+if (matchMedia('(prefers-color-scheme: dark)').matches && !root.dataset.theme) root.dataset.theme = 'dark';
+document.getElementById('theme').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; draw(); };
+draw();
+</script>
+</body>
+</html>
