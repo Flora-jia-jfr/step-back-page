@@ -127,6 +127,11 @@ th.us { color: var(--back-ink) !important; }
 .box ul.steps { list-style: none; margin-top: 4px; }
 .box ul.steps li { font-size: 15.5px; line-height: 1.55; margin-top: 8px; }
 .box .small { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.chainbox ul.steps { list-style: none; margin-top: 10px; }
+.chainbox ul.steps li { font-size: 14.5px; line-height: 1.5; margin-top: 4px; padding-left: 14px; position: relative; color: var(--ink-2); }
+.chainbox ul.steps li::before { content: ""; position: absolute; left: 0; top: .68em; width: 6px; height: 6px; border-radius: 50%; background: var(--axis); }
+.two .box li.cite::before { display: none; }
+.two .box li.cite { padding-left: 0; font-size: 13px; }
 /* callout */
 .callout { border-left: 3px solid var(--back-ink); background: var(--back); border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 22px 0; font-size: 16px; }
 .callout .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--back-ink); margin-bottom: 4px; }
@@ -192,12 +197,11 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <nav class="top"><div class="in">
-  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Step back <small>proposal v2</small></a>
+  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Step back</a>
   <a class="l" href="#motivation">Motivation</a>
   <a class="l" href="#preliminary">Preliminary results</a>
   <a class="l" href="#questions">Questions</a>
-  <a class="l" href="#pilot">Pilot</a>
-  <a class="l" href="#next">Next steps</a>
+  <a class="l" href="#setup">Setup</a>
   <button id="theme" aria-label="Toggle dark theme">◐</button>
 </div></nav>
 
@@ -205,7 +209,6 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <header class="hero" id="top">
   <div class="hero-grid">
     <div>
-      <div class="meta">Research proposal · v2 · 27 October 2026</div>
       <h1>When should a research agent <em>step back</em>?</h1>
       <p class="sub">An agent's answer is not good enough yet. It can analyze more, revise its model, collect more of the same data, or run an experiment that tells competing explanations apart. We measure, against ground truth and counterfactual runs, whether it knows what each of these is worth, and where that judgment breaks.</p>
     </div>
@@ -237,7 +240,6 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     <li><span class="q">Q3</span><b>Is there room for judgment?</b>Or do simple fixed policies already come close? Reported either way.</li>
     <li><span class="q">Q4</span><b>Can it be repaired?</b>If it ranks well but misjudges size, does value calibration fix the choice?</li>
   </ol>
-  <div class="links"><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/proposal.md">Full proposal</a><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/zh/proposal_zh.md">中文版</a><a href="https://github.com/Flora-jia-jfr/step-back/blob/main/thought_process.md">How we got here</a><span class="tgt">target ICML 2027 · fallback NeurIPS 2027</span></div>
 </header>
 
 <!-- ============ the decision ============ -->
@@ -345,7 +347,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   <h3>3 · It saw what it could not test</h3>
   <div class="callout">
     <div class="lbl">why the pilot needs a new toy</div>
-    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "step back and test an assumption" was impossible in this toy. The pilot's toy causal model (§05) is built so that it is possible.</p>
+    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "step back and test an assumption" was impossible in this toy. The pilot's toy causal model (§05, Experiment setup) is built so that it is possible.</p>
   </div>
 </section>
 
@@ -361,28 +363,15 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     <tr><td><span class="pill">Q4</span></td><td><b>Can it be repaired?</b><br><span class="g">value calibration: feedback on practice states, or an outside rescaling</span></td><td class="g">regret on new seeds, at matched cost, with no extra false structure</td></tr>
   </table>
 
-  <h3>How one state is measured</h3>
-  <div class="chainbox"><div class="lbl">from one saved moment</div>
-    <div class="chain">
-      <span class="chip"><i>1</i>first analysis window</span><span class="arrow">→</span>
-      <span class="chip dark">save</span><span class="arrow">→</span>
-      <span class="chip"><i>2</i>ask, then discard: which move? what would each gain?</span>
-    </div>
-  </div>
-  <div class="chainbox"><div class="lbl">run every branch from the save, to the end of the budget, twice</div>
-    <div class="chain">
-      <span class="chip">STOP</span><span class="chip k">A</span><span class="chip b">R</span><span class="chip k">D</span><span class="chip b">X</span><span class="arrow">→</span>
-      <span class="chip"><i>3</i>record each remedy's realized gain, with its spread</span><span class="arrow">→</span>
-      <span class="chip"><i>4</i>compare with its estimates, its choice and what it actually did</span>
-    </div>
-  </div>
-  <p style="margin-top:16px">The agent decides when its first window ends, and all policies share the same analysis budget. A and R are prompts, so we record both the branch assigned and what the agent actually did. Three prompt conditions (neutral, generic review, framework review) show whether a prompt fixes a failure at this budget; none names a mechanism. A remedy counts as best in a state only when it clearly beats the next one.</p>
 </section>
 
-<!-- ============ pilot ============ -->
-<section id="pilot">
-  <h2>Pilot: a toy causal model</h2>
-  <p class="lede">A small model built for this question. It only generates the data; the agent's task is prediction, not causal discovery.</p>
+<!-- ============ setup ============ -->
+<section id="setup">
+  <h2>Experiment setup</h2>
+  <p class="lede">The pilot runs one agent (Claude Sonnet 5.5) on a small toy causal model built for this question. At each decision point we save the agent's state, ask what it would do, and then run every option from the same save.</p>
+
+  <h3>The environment: a toy causal model</h3>
+  <p>The model only generates the data; the agent's task is prediction, not causal discovery.</p>
   <div class="box"><div class="lbl">setup</div>
     <p style="font-size:16.5px">Records from two sites: age <code>A</code>, a baseline score <code>S</code>, treated or not <code>T</code>, outcome <code>Y</code>. Predict the mean outcome with and without treatment in an <b>older</b> target population, as measured by a reference lab.</p>
   </div>
@@ -407,7 +396,88 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     </ul></div>
   </div>
 
-  <h3>Plan and stopping rules</h3>
+
+  <h3>What the agent gets and returns</h3>
+  <figure>
+    <table class="t">
+      <tr><td class="n" style="width:22%">Given</td><td>Records from two sites (site, age <code>A</code>, baseline score <code>S</code>, treated <code>T</code>, outcome <code>Y</code>); a short, neutral description of the study and of the older target population; the list of options and their prices</td></tr>
+      <tr><td class="n">Tools</td><td>A Python sandbox. All analysis draws on one shared budget of analysis windows and tokens</td></tr>
+      <tr><td class="n">Returns</td><td>The predicted mean outcome with and without treatment in the target population, and one sentence stating its working model</td></tr>
+      <tr><td class="n">Scored by</td><td>Squared error of the two predicted means against the true values, as the reference lab would measure them</td></tr>
+    </table>
+    <figcaption><b>Table 4.</b> The stated working model tells us which model class the agent is in, and whether a step actually changed it.</figcaption>
+  </figure>
+
+  <h3>The options</h3>
+  <figure>
+    <table class="t">
+      <tr><th style="width:30%">Option</th><th>What happens</th><th style="width:26%">Cost</th></tr>
+      <tr><td class="n">Stop</td><td class="g">submit the current answer</td><td class="g">none</td></tr>
+      <tr><td class="n">A · analyze more</td><td class="g">continue on the same data</td><td class="g">no price; uses the analysis budget</td></tr>
+      <tr><td class="n">R · revise the model</td><td class="g">continue after a framework-review prompt</td><td class="g">no price; uses the analysis budget</td></tr>
+      <tr><td class="n">D · same-kind data</td><td class="g">a new batch of units from the study</td><td class="g">cheap</td></tr>
+      <tr><td class="n">X1 · target-age batch</td><td class="g">units in the target age range</td><td class="g">more expensive</td></tr>
+      <tr><td class="n">X2 · randomized batch</td><td class="g">units with treatment assigned at random</td><td class="g">more expensive</td></tr>
+      <tr><td class="n">X3 · reference-lab re-test</td><td class="g">stored samples measured again at the reference lab</td><td class="g">more expensive</td></tr>
+    </table>
+    <figcaption><b>Table 5.</b> Prices come in two levels, set by simulation before the run. Every task lists every option, whatever the truth.</figcaption>
+  </figure>
+
+  <h3>One trial, step by step</h3>
+  <div class="chainbox"><div class="lbl">at one decision point</div>
+    <div class="chain">
+      <span class="chip"><i>1</i>first analysis window; the agent decides when to submit</span><span class="arrow">→</span>
+      <span class="chip dark">save</span><span class="arrow">→</span>
+      <span class="chip"><i>2</i>ask, then discard the copy</span>
+    </div>
+    <ul class="steps">
+      <li>Which option would you take, at each price?</li>
+      <li>How much would each option lower your error?</li>
+      <li>Where does the remaining error come from: data, analysis, the model, or nothing?</li>
+      <li>How likely is it that more analysis makes the answer worse?</li>
+    </ul>
+  </div>
+  <div class="chainbox"><div class="lbl">then, from the same save: every branch to the end of the budget, twice</div>
+    <div class="chain">
+      <span class="chip">STOP</span><span class="chip k">A</span><span class="chip b">R</span><span class="chip k">D</span><span class="chip b">X1</span><span class="chip b">X2</span><span class="chip b">X3</span><span class="arrow">+</span>
+      <span class="chip">controls: plain continue · "confirm or revise" · generic review</span>
+    </div>
+    <div class="chain" style="margin-top:8px">
+      <span class="chip"><i>3</i>record each option's realized gain and its spread</span><span class="arrow">→</span>
+      <span class="chip"><i>4</i>record what the agent actually did</span><span class="arrow">→</span>
+      <span class="chip"><i>5</i>compare with its estimates and its choice</span>
+    </div>
+  </div>
+  <p style="margin-top:14px">A and R are prompts, not behaviors, so step 4 checks whether the stated working model or the code really changed. An option counts as best in a state only when it clearly beats the next one.</p>
+
+  <h3>Conditions and comparisons</h3>
+  <div class="two">
+    <div class="box"><div class="lbl">prompt conditions</div><ul>
+      <li><b>Neutral:</b> goal, data and options only.</li>
+      <li><b>Generic review:</b> "Check your analysis for omissions or errors."</li>
+      <li><b>Framework review:</b> "Test the core assumptions of your model, consider alternative explanations, and consider what evidence could tell them apart."</li>
+      <li class="cite">None names a mechanism or says the model is wrong.</li>
+    </ul></div>
+    <div class="box"><div class="lbl">starting point</div><ul>
+      <li><b>Main:</b> the agent's own first window.</li>
+      <li><b>Ablation:</b> it takes over a saved first window from another run or another model, since models treat others' errors differently from their own.</li>
+    </ul></div>
+  </div>
+  <div class="two">
+    <div class="box"><div class="lbl">fixed-policy baselines</div><ul>
+      <li>Always stop; always analyze k more rounds; always run the framework review; always buy diagnostic data.</li>
+      <li>Fit every candidate model at the start, then select.</li>
+      <li>A sequential model-class test, and a residual trigger.</li>
+      <li class="cite">All share the agent's analysis budget.</li>
+    </ul></div>
+    <div class="box b"><div class="lbl">the repair: value calibration</div><ul>
+      <li><b>Feedback:</b> before deciding, the agent sees its past estimates next to the realized gains on a few practice states.</li>
+      <li><b>Outside rescaling:</b> a monotone map from its estimates to realized gains, fitted on development seeds.</li>
+      <li class="cite">Tested on new seeds, at matched cost.</li>
+    </ul></div>
+  </div>
+
+  <h3>Scale and stopping rules</h3>
   <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, second runs, controls, the prompt conditions, a start from another run's saved state, and the value-calibration repair on new seeds.</p>
   <figure>
     <table class="t">
@@ -416,25 +486,12 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td>the best fixed policy ≈ the best per-state choice</td><td class="g">report it; the main line stops</td></tr>
       <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
     </table>
-    <figcaption><b>Table 4.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
+    <figcaption><b>Table 6.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
   </figure>
 </section>
 
-<!-- ============ next ============ -->
-<section id="next">
-  <h2>Next steps</h2>
-  <div class="tl">
-    <div class="row now"><div class="w">28 Oct – 3 Nov</div><div>Build the toy: data generator, ideal observer, calibration simulations, tests</div></div>
-    <div class="row"><div class="w">4 – 10 Nov</div><div>Pilot Stage 0 <span class="gate">decide: go or stop · ICML or NeurIPS · application</span></div></div>
-    <div class="row"><div class="w">11 – 24 Nov</div><div>Application environment; the leading candidate is a richer causal setting, such as a multi-site clinical study</div></div>
-    <div class="row"><div class="w">25 Nov – 5 Jan</div><div>Main experiments with three or more agents, including a weaker one</div></div>
-    <div class="row"><div class="w">6 – 17 Jan</div><div>Fixed-policy baselines, the value-calibration repair, transfer (switch box; BoxingGym with a wrong starting model)</div></div>
-    <div class="row"><div class="w">18 Jan →</div><div>Writing</div></div>
-  </div>
-</section>
 </main>
 
-<footer>Research proposal v2, 27 October 2026. Source: <a href="https://github.com/Flora-jia-jfr/step-back/blob/main/proposal.md">proposal.md</a> · <a href="https://github.com/Flora-jia-jfr/step-back/blob/main/zh/proposal_zh.md">zh/proposal_zh.md</a> · preliminary runs in <code>runs/</code>.</footer>
 <div id="tip" role="status"></div>
 
 <script>
