@@ -117,6 +117,8 @@ td.us, th.us { background: var(--back); padding-left: 10px !important; }
 th.us { color: var(--back-ink) !important; }
 
 /* two cards */
+.tscroll { overflow-x: auto; }
+.tscroll table.t { min-width: 620px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 22px; }
 .two .box ul { list-style: none; font-size: 14.5px; line-height: 1.5; }
 .two .box li { margin-top: 8px; padding-left: 14px; position: relative; }
@@ -187,7 +189,7 @@ svg text { font-family: var(--sans); }
 footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); }
 
 @media (max-width: 820px) {
-  section { grid-template-columns: 1fr; } section > *, section > h2 { grid-column: 1; }
+  section { grid-template-columns: minmax(0, 1fr); } section > *, section > h2 { grid-column: 1; }
   section > h2 { grid-template-columns: 1fr; } section > h2::before { margin-bottom: 4px; }
   .hero-grid, .rqs, .two, .stats { grid-template-columns: 1fr; }
   .hero h1 { font-size: 38px; } .quad { grid-template-columns: 64px 1fr 1fr; } .stop { padding-left: 0; }
@@ -212,7 +214,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     <div>
       <h1>Which way <em>next</em>?</h1>
       <p class="kick">Do research agents know what each next step is worth?</p>
-      <p class="sub">An agent's answer is not good enough yet. It can analyze more, rethink its explanation, collect more of the same data, or run an experiment that tells competing explanations apart. We measure, against ground truth and counterfactual runs, whether it knows what each of these is worth, and where that judgment breaks.</p>
+      <p class="sub">Research agents act on their own estimates of what each next step is worth. We measure those estimates against what each step actually achieves, by running every option from the same decision point: analyze more, rethink the explanation, collect more of the same data, or run an experiment that tells explanations apart. In our first runs, Claude's estimates are ordered right but sized wrong.</p>
     </div>
     <figure class="forkfig">
       <svg viewBox="0 0 340 220" width="100%" role="img" aria-label="From one saved state, every next move is run">
@@ -233,11 +235,11 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
           </g>
         </g>
       </svg>
-      <figcaption>From one saved moment, run every move and score it against the best possible answer.</figcaption>
+      <figcaption>At one saved moment, ask the agent what each move would gain; then run every move and see what it really gains.</figcaption>
     </figure>
   </div>
   <ol class="rqs">
-    <li><span class="q">Q1</span><b>Does it know what each step is worth?</b>Which one helps more, and by how much, relative to the price.</li>
+    <li><span class="q">Q1</span><b>Do its estimates match the real gains?</b>Which step helps more, and by how much, relative to the price; too low or too high.</li>
     <li><span class="q">Q2</span><b>Where does the call break?</b>In the estimate, in the choice, or in carrying the step out.</li>
     <li><span class="q">Q3</span><b>Is there room for judgment?</b>Or do simple fixed policies already come close? Reported either way.</li>
     <li><span class="q">Q4</span><b>Can it be repaired?</b>If it ranks well but misjudges size, does value calibration fix the choice?</li>
@@ -279,34 +281,36 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <!-- ============ motivation ============ -->
 <section id="motivation">
   <h2>Motivation</h2>
-  <p class="lede">We already know research agents get stuck. What we do not know is how they value their next step, and where that judgment fails.</p>
+  <p class="lede">Agents choose their next step by what they expect it to gain. Nobody has checked those expectations against what the step actually gains.</p>
   <div class="two">
     <div class="box"><div class="lbl">known</div><ul>
       <li>Research agents keep tuning when they should rethink <span class="cite">(ResearchGym; "frame-lock" in AutoResearch)</span>, judged from traces afterwards.</li>
       <li>Decision methods compare candidates by running them. LLM-IDEA runs every candidate experiment from the same data and reports regret; Outgrow a Theory learns when and how to revise a model class.</li>
+      <li>Information seeking goes wrong both ways: models stop asking before they have enough <span class="cite">(MT-InfoSeek)</span>, and pay for checks that cannot change the decision <span class="cite">(DIVA)</span>.</li>
     </ul></div>
     <div class="box b"><div class="lbl">missing</div><ul>
-      <li>In those methods a fixed criterion or a learned policy makes the choice, and only one kind of remedy is compared.</li>
-      <li>Nobody has scored an LLM agent's own estimates and choices against the realized value of different kinds of remedies from the same state.</li>
+      <li>In the decision methods, a fixed criterion or a learned policy makes the choice, and only one kind of step is compared.</li>
+      <li>Nobody has compared an LLM agent's own estimate of a step with what that step achieves from the same state, across different kinds of step.</li>
+      <li>So we cannot say when an agent underrates a step and when it overrates one.</li>
     </ul></div>
   </div>
-  <p>Those methods build better decision mechanisms. We ask how existing agents judge the next step: do they know which remedy helps more, by how much, do they act on it, and do they carry it out?</p>
+  <p>Running every option from the same state is our measuring tool, the way a randomized trial is for a drug; it is not new by itself. Others use it to train a controller or to compare fixed criteria. We use it to score the agent's own estimate of each step: does it know which step helps more, by how much, does it act on that, and does it carry the step out?</p>
   <figure>
-    <table class="t">
-      <tr><th style="width:34%"></th><th>Observe traces</th><th>Decision methods</th><th>Fork one state</th><th class="us">This work</th></tr>
-      <tr><td>Run several moves from the same state</td><td class="no">no</td><td class="y">yes, experiments</td><td class="y">yes</td><td class="y us">yes</td></tr>
-      <tr><td>Know the best possible answer</td><td class="no">no</td><td class="y">yes</td><td class="no">no</td><td class="y us">yes</td></tr>
-      <tr><td>Compare four kinds of remedy</td><td class="no">after the fact</td><td class="no">one kind</td><td class="no">no</td><td class="y us">yes</td></tr>
-      <tr><td>Score the LLM's own estimates and choices</td><td class="no">no</td><td class="no">no</td><td class="no">outside controller</td><td class="y us">yes</td></tr>
-    </table>
-    <figcaption><b>Table 2.</b> Observe: ResearchGym, AutoResearch, AARRI-Bench. Decision methods: LLM-IDEA (its §5.9 runs each candidate experiment from the same data), Learning to Outgrow a Theory. Fork: SURE-Act, PORA, DIAL. The closest setting, ACED-Bench, hides a causal model behind natural-language scenarios but reports only failure modes.</figcaption>
+    <div class="tscroll"><table class="t">
+      <tr><th style="width:30%"></th><th>Observe traces</th><th>Information seeking</th><th>Decision methods</th><th>Fork one state</th><th class="us">This work</th></tr>
+      <tr><td>Compare the LLM's own estimate with each step's real gain</td><td class="no">no</td><td class="no">partly</td><td class="no">no</td><td class="no">no; trains a controller</td><td class="y us">yes</td></tr>
+      <tr><td>Run several moves from the same state</td><td class="no">no</td><td class="no">no</td><td class="y">yes, experiments</td><td class="y">yes</td><td class="y us">yes</td></tr>
+      <tr><td>Know the best possible answer</td><td class="no">no</td><td class="y">yes</td><td class="y">yes</td><td class="no">no</td><td class="y us">yes</td></tr>
+      <tr><td>Compare four kinds of step</td><td class="no">after the fact</td><td class="no">one kind</td><td class="no">one kind</td><td class="no">no</td><td class="y us">yes</td></tr>
+    </table></div>
+    <figcaption><b>Table 2.</b> Observe: ResearchGym, AutoResearch, AARRI-Bench. Information seeking: MT-InfoSeek scores the model's guess of how much information is missing, DIVA the regret of the checks it buys. Decision methods: LLM-IDEA (its §5.9 runs each candidate experiment from the same data), Learning to Outgrow a Theory. Fork: SURE-Act, PORA, DIAL. The closest setting, ACED-Bench, hides a causal model behind natural-language scenarios but reports only failure modes.</figcaption>
   </figure>
 </section>
 
 <!-- ============ preliminary ============ -->
 <section id="preliminary">
   <h2>Preliminary results</h2>
-  <p class="lede">In one sentence: Claude knows roughly where new data would help, but thinks they help several times less than they do, so it stops too early.</p>
+  <p class="lede">In one sentence: Claude's estimates of what new data would gain are ordered right but sized wrong. It knows roughly where data would help, but thinks they help several times less than they do, so it stops too early.</p>
 
   <div class="box">
     <div class="lbl">what we ran</div>
@@ -356,10 +360,10 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <!-- ============ questions ============ -->
 <section id="questions">
   <h2>Goal and questions</h2>
-  <p class="lede">The goal is to measure, against ground truth and counterfactual runs, how well an agent judges what each next step is worth, and where that judgment breaks.</p>
+  <p class="lede">The goal is to compare an agent's own estimate of each next step with what that step actually gains, against ground truth and counterfactual runs, and to find where the judgment breaks.</p>
   <table class="t">
     <tr><th style="width:70px"></th><th>Question</th><th style="width:38%">How we read it</th></tr>
-    <tr><td><span class="pill">Q1</span></td><td><b>Does it know what each remedy is worth?</b><br><span class="g">ranking · size · relative to the price</span></td><td class="g">its estimates against realized gains: rank, and calibration of size</td></tr>
+    <tr><td><span class="pill">Q1</span></td><td><b>Do its estimates match the real gains?</b><br><span class="g">ranking · size · relative to the price · too low or too high</span></td><td class="g">its estimate of each step against that step's realized gain from the same state: rank, and calibration of size</td></tr>
     <tr><td><span class="pill">Q2</span></td><td><b>Where does the call break?</b><br><span class="g">in the estimate · in the choice · in the execution</span></td><td class="g">choice against its own estimates; assigned branch against what it actually did</td></tr>
     <tr><td><span class="pill">Q3</span></td><td><b>Is there room for judgment?</b><br><span class="g">or do fixed policies (always review, fit every model up front) come close?</span></td><td class="g">fixed policies against the best per-state choice; reported either way</td></tr>
     <tr><td><span class="pill">Q4</span></td><td><b>Can it be repaired?</b><br><span class="g">value calibration: feedback on practice states, or an outside rescaling</span></td><td class="g">regret on new seeds, at matched cost, with no extra false structure</td></tr>
@@ -370,7 +374,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <!-- ============ setup ============ -->
 <section id="setup">
   <h2>Experiment setup</h2>
-  <p class="lede">The pilot runs one agent (Claude Sonnet 5.5) on a small toy causal model built for this question. At each decision point we save the agent's state, ask what it would do, and then run every option from the same save.</p>
+  <p class="lede">The core design: at each decision point we save the agent's state, ask what each option would gain and which one it would take, and then run every option from the same save. Each option's realized gain is what its estimate is scored against. The pilot runs one agent (Claude Sonnet 5.5) on a small toy causal model built for this question.</p>
 
   <h3>The environment: a toy causal model</h3>
   <p>The model only generates the data; the agent's task is prediction, not causal discovery.</p>
@@ -451,6 +455,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     </div>
   </div>
   <p style="margin-top:14px">A and R are prompts, not behaviors, so step 4 checks whether the stated working model or the code really changed. An option counts as best in a state only when it clearly beats the next one.</p>
+  <p>Stage 0 forks once, right after the first answer. Stage 1 also lets the agent follow its own choices and forks again at 2–3 later decision points along that path, to see whether its estimates keep up as a step's value changes.</p>
 
   <h3>Conditions and comparisons</h3>
   <div class="two">
@@ -474,19 +479,27 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     </ul></div>
     <div class="box b"><div class="lbl">the repair: value calibration</div><ul>
       <li><b>Feedback:</b> before deciding, the agent sees its past estimates next to the realized gains on a few practice states.</li>
-      <li><b>Outside rescaling:</b> a monotone map from its estimates to realized gains, fitted on development seeds.</li>
+      <li><b>Outside rescaling:</b> a monotone map from its estimates to realized gains, fitted on development seeds. It can fix the size, not the order, so it helps only if the ranking is good.</li>
       <li class="cite">Tested on new seeds, at matched cost.</li>
     </ul></div>
   </div>
 
+  <h3>Do the four kinds cover what agents do?</h3>
+  <div class="box"><div class="lbl">trace-coding check</div><ul class="steps">
+    <li><b>Why.</b> The four kinds come from two questions, top down. This small check goes bottom up: it codes each step in real agent traces as A, R, D, X, stop, or "other".</li>
+    <li><b>Traces.</b> Our 120 saved Claude analysis windows from the switch box, plus public traces of open-ended agents that can also request data or run experiments. Not the toy's traces: its menu is the four kinds by construction.</li>
+    <li><b>Report.</b> The share of steps the four kinds cover, agreement between two coders, and what the "other" steps are. If many are "other", we change the kinds before building the application environment.</li>
+  </ul></div>
+
   <h3>Scale and stopping rules</h3>
-  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, second runs, controls, the prompt conditions, a start from another run's saved state, and the value-calibration repair on new seeds.</p>
+  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, second runs, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
   <figure>
     <table class="t">
       <tr><th style="width:48%">We stop or change course if…</th><th>Then</th></tr>
       <tr><td>one remedy has the largest gain in almost every state</td><td class="g">recalibrate the toy once; stop if still one-sided</td></tr>
       <tr><td>the best fixed policy ≈ the best per-state choice</td><td class="g">report it; the main line stops</td></tr>
       <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
+      <tr><td>many coded steps fall outside the four kinds</td><td class="g">add or split a kind before the application environment</td></tr>
     </table>
     <figcaption><b>Table 6.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
   </figure>
