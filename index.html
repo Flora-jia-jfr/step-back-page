@@ -337,6 +337,15 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     <figcaption><b>Table 3.</b> The preliminary setup. One model, two runs per option, small sample: read only the direction. Claude estimated the gain of 32 records placed where it chose; we ran one record per visible setting.</figcaption>
   </figure>
 
+  <h3>One moment, step by step</h3>
+  <div class="box"><div class="lbl">task C-s22: 32 records, one moment</div><ul class="steps">
+    <li><b>The truth.</b> The lamp lights 70% of the time when switch 1 is on and 30% when it is off. No other switch matters.</li>
+    <li><b>Claude's first answer.</b> In these 32 presses, more switches on happened to mean more light (2 switches on: 3 of 15 lit; 4 on: 8 of 15), and switch 1 looked only mildly useful (on: 8 of 16 lit; off: 4 of 16). A leave-one-out comparison picked "number of switches on" as the model, predicting 7% with none on up to 80% with all on. Error 0.057, about 24 points off per setting.</li>
+    <li><b>What it said when asked.</b> 32 more records would lower the error by about 0.005, far below their price, because "on the even subspace each Fourier term is indistinguishable from its complement … no even-parity sample can resolve that." It chose stop at all three prices.</li>
+    <li><b>What actually happened.</b> Given 32 more records (a second press of each visible setting), switch 1 stood out (on: 69% lit; off: 28%). Claude refit switch 1 plus the count, and the error fell to 0.009: a gain of 0.048, about ten times its estimate. Four more windows without new data moved the error only to 0.054.</li>
+    <li><b>The lesson.</b> Its reason is true of the box in general, but not the cause here: this error came from noise in 32 presses, and more presses fixed it.</li>
+  </ul></div>
+
   <h3>1 · It knows where data help, not how much</h3>
   <figure>
     <div class="chart-card" id="c1">
