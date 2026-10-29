@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>When should a research agent step back?</title>
+<title>Which way next? Do research agents know what each next step is worth?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -66,6 +66,7 @@ section > h2::before { counter-increment: sec; content: counter(sec, decimal-lea
 .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .03em; margin-bottom: 18px; }
 .hero h1 { font-family: var(--serif); font-weight: 600; font-size: 50px; line-height: 1.07; letter-spacing: -.02em; margin-bottom: 20px; }
 .hero h1 em { font-style: normal; color: var(--back-ink); }
+.hero .kick { font-family: var(--serif); font-size: 25px; line-height: 1.35; margin: -6px 0 18px; color: var(--ink); }
 .hero .sub { font-size: 18.5px; line-height: 1.6; color: var(--ink-2); }
 .forkfig { background: var(--card); border-radius: 14px; padding: 18px 16px 12px; }
 .forkfig figcaption { font-size: 12.5px; color: var(--muted); margin-top: 6px; text-align: center; }
@@ -197,7 +198,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <nav class="top"><div class="in">
-  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Step back</a>
+  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Which way next</a>
   <a class="l" href="#motivation">Motivation</a>
   <a class="l" href="#preliminary">Preliminary results</a>
   <a class="l" href="#questions">Questions</a>
@@ -209,8 +210,9 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 <header class="hero" id="top">
   <div class="hero-grid">
     <div>
-      <h1>When should a research agent <em>step back</em>?</h1>
-      <p class="sub">An agent's answer is not good enough yet. It can analyze more, revise its model, collect more of the same data, or run an experiment that tells competing explanations apart. We measure, against ground truth and counterfactual runs, whether it knows what each of these is worth, and where that judgment breaks.</p>
+      <h1>Which way <em>next</em>?</h1>
+      <p class="kick">Do research agents know what each next step is worth?</p>
+      <p class="sub">An agent's answer is not good enough yet. It can analyze more, rethink its explanation, collect more of the same data, or run an experiment that tells competing explanations apart. We measure, against ground truth and counterfactual runs, whether it knows what each of these is worth, and where that judgment breaks.</p>
     </div>
     <figure class="forkfig">
       <svg viewBox="0 0 340 220" width="100%" role="img" aria-label="From one saved state, every next move is run">
@@ -225,7 +227,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
           <g font-weight="600">
             <circle cx="214" cy="22" r="4.5" fill="var(--axis)"/><text x="226" y="26" fill="var(--ink)">STOP</text>
             <circle cx="214" cy="66" r="4.5" fill="var(--keep-ink)"/><text x="226" y="70" fill="var(--ink)">A <tspan font-weight="400" fill="var(--ink-2)">analyze more</tspan></text>
-            <circle cx="214" cy="110" r="4.5" fill="var(--back-ink)"/><text x="226" y="114" fill="var(--ink)">R <tspan font-weight="400" fill="var(--ink-2)">revise model</tspan></text>
+            <circle cx="214" cy="110" r="4.5" fill="var(--back-ink)"/><text x="226" y="114" fill="var(--ink)">R <tspan font-weight="400" fill="var(--ink-2)">rethink</tspan></text>
             <circle cx="214" cy="154" r="4.5" fill="var(--keep-ink)"/><text x="226" y="158" fill="var(--ink)">D <tspan font-weight="400" fill="var(--ink-2)">same data</tspan></text>
             <circle cx="214" cy="198" r="4.5" fill="var(--back-ink)"/><text x="226" y="202" fill="var(--ink)">X <tspan font-weight="400" fill="var(--ink-2)">diagnostic</tspan></text>
           </g>
@@ -244,20 +246,20 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 
 <!-- ============ the decision ============ -->
 <section id="decision">
-  <h2>The decision</h2>
-  <p class="lede">Every analysis reaches a point where the answer is still uncertain. The next step falls into one of four cells, or the agent stops.</p>
+  <h2>Four kinds of next step</h2>
+  <p class="lede">An analysis agent can do almost anything next. We group its open-ended actions by two questions: does the information come from the data at hand or from new data, and is the step meant to refine the current explanation or to test whether it is right?</p>
   <figure>
     <div class="quad">
-      <div></div><div class="h k">keep the current model</div><div class="h b">step back: revise the model</div>
-      <div class="r">existing data</div>
-      <div class="qc k"><div class="t"><span>A</span>Analyze more</div><div class="d">tune, search, check the fit</div></div>
-      <div class="qc b"><div class="t"><span>R</span>Revise the model</div><div class="d">test the assumptions, propose another mechanism</div></div>
+      <div></div><div class="h k">refine the current explanation</div><div class="h b">question the current explanation</div>
+      <div class="r">data at hand</div>
+      <div class="qc k"><div class="t"><span>A</span>Analyze more</div><div class="d">refit, tune, check the fit</div></div>
+      <div class="qc b"><div class="t"><span>R</span>Rethink the explanation</div><div class="d">test the assumptions; look in the data at hand for other explanations</div></div>
       <div class="r">new data</div>
-      <div class="qc k"><div class="t"><span>D</span>More of the same data</div><div class="d">more records of the kind already collected</div></div>
-      <div class="qc b"><div class="t"><span>X</span>Diagnostic experiment</div><div class="d">data that can tell the current model from an alternative</div></div>
+      <div class="qc k"><div class="t"><span>D</span>More of the same data</div><div class="d">more records of the kind already collected, to reduce noise</div></div>
+      <div class="qc b"><div class="t"><span>X</span>Diagnostic experiment</div><div class="d">new data that can tell the current explanation from an alternative</div></div>
     </div>
     <div class="stop">… or stop.</div>
-    <figcaption><b>Figure 1.</b> Four remedies. The right column is what we mean by stepping back. Analysis has no price in money, but every policy shares one finite analysis budget; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
+    <figcaption><b>Figure 1.</b> Four kinds of next step. Each answers a different shortfall: the analysis is not finished (A), the explanation may be wrong (R), there is too little data (D), or the data cannot separate the explanations (X). Analysis has no price in money, but every policy shares one finite analysis budget; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
   </figure>
 
   <h3>Same first answer, four different right moves</h3>
@@ -347,7 +349,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   <h3>3 · It saw what it could not test</h3>
   <div class="callout">
     <div class="lbl">why the pilot needs a new toy</div>
-    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "step back and test an assumption" was impossible in this toy. The pilot's toy causal model (§05, Experiment setup) is built so that it is possible.</p>
+    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "test the explanation with a new kind of data" was impossible in this toy. The pilot's toy causal model (§05, Experiment setup) is built so that it is possible.</p>
   </div>
 </section>
 
@@ -414,7 +416,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><th style="width:30%">Option</th><th>What happens</th><th style="width:26%">Cost</th></tr>
       <tr><td class="n">Stop</td><td class="g">submit the current answer</td><td class="g">none</td></tr>
       <tr><td class="n">A · analyze more</td><td class="g">continue on the same data</td><td class="g">no price; uses the analysis budget</td></tr>
-      <tr><td class="n">R · revise the model</td><td class="g">continue after a framework-review prompt</td><td class="g">no price; uses the analysis budget</td></tr>
+      <tr><td class="n">R · rethink the explanation</td><td class="g">continue after a framework-review prompt</td><td class="g">no price; uses the analysis budget</td></tr>
       <tr><td class="n">D · same-kind data</td><td class="g">a new batch of units from the study</td><td class="g">cheap</td></tr>
       <tr><td class="n">X1 · target-age batch</td><td class="g">units in the target age range</td><td class="g">more expensive</td></tr>
       <tr><td class="n">X2 · randomized batch</td><td class="g">units with treatment assigned at random</td><td class="g">more expensive</td></tr>
