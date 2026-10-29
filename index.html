@@ -312,15 +312,30 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   <h2>Preliminary results</h2>
   <p class="lede">In one sentence: Claude's estimates of what new data would gain are ordered right but sized wrong. It knows roughly where data would help, but thinks they help several times less than they do, so it stops too early.</p>
 
-  <div class="box">
-    <div class="lbl">what we ran</div>
-    <ul class="steps">
-      <li><b>The task.</b> A black box with six on/off switches. Each press lights a lamp with a hidden probability that depends on the switches. The agent sees records for half of the switch settings and must predict the lamp's probability for the other half. We know the true probabilities, so every answer can be scored exactly.</li>
-      <li><b>The moments.</b> 24 saved moments, each right after Claude (Sonnet 5.5) gave its first answer: 12 tasks, each in two versions of the task text.</li>
-      <li><b>At each moment, from the same saved copy:</b> we asked Claude how much 32 more records would lower its error, and what it would do at three data prices (in copies we then threw away). Separately, we actually gave it the 32 records, and let it re-analyze the same data for up to four more rounds, and measured how much the error really changed.</li>
-    </ul>
-    <p class="small">One model, two runs per branch, small sample: read only the direction.</p>
+  <h3>What we ran</h3>
+  <p>These runs used an earlier toy, the <b>switch box</b>, with one agent, Claude Sonnet 5.5. They follow the pilot's plan with fewer options: save a moment, ask Claude what each option would gain, then run the options and see what they really gain.</p>
+  <div class="chainbox"><div class="lbl">at each of the 24 moments</div>
+    <div class="chain">
+      <span class="chip"><i>1</i>Claude's first answer</span><span class="arrow">→</span>
+      <span class="chip dark">save</span><span class="arrow">→</span>
+      <span class="chip"><i>2</i>ask what each option would gain; discard the copy</span><span class="arrow">→</span>
+      <span class="chip"><i>3</i>run the options from the save</span><span class="arrow">→</span>
+      <span class="chip"><i>4</i>compare estimate with actual gain</span>
+    </div>
   </div>
+  <figure>
+    <table class="t">
+      <tr><td class="n" style="width:22%">The box</td><td>Six on/off switches, so 64 settings. Pressing a button lights a lamp with a probability that depends only on the setting. The hidden rule is one of four: no effect; one switch matters (±0.2); two switches interact (±0.3); or both.</td></tr>
+      <tr><td class="n">The data</td><td>A record is one press: a setting and whether the lamp lit. Claude gets 32 or 128 records, and only for the 32 settings with an even number of switches on.</td></tr>
+      <tr><td class="n">The answer</td><td>A lamp probability for all 64 settings, scored on the 32 settings it never sees: mean squared error against the true probabilities. An error of 0.01 means about 10 percentage points off.</td></tr>
+      <tr><td class="n">First answer</td><td>One analysis window: Claude reads the data, runs Python up to 4 times, and submits.</td></tr>
+      <tr><td class="n">The 24 moments</td><td>12 tasks (4 rules × 3 seeds: 8 tasks with 128 records, 4 with 32), each run in two versions of the task text, with and without one sentence saying that effects of three or more switches are rare. Each moment is saved right after the first answer.</td></tr>
+      <tr><td class="n">What we asked</td><td>In copies we then threw away: you may stop (free), analyze one more window (price 0.002), or get 32 new records and analyze (0.002 plus a data price of 0.004, 0.012 or 0.03). How much would each lower your error, and which do you choose?</td></tr>
+      <tr><td class="n">What we ran</td><td>From the same save, each twice: 32 new records (one per visible setting), then one window; and four more windows on the same data, each opening with a review prompt.</td></tr>
+      <tr><td class="n">Actual gain</td><td>Error at the first answer minus error after the option, averaged over the two runs. An ideal statistician (a Bayesian observer that knows the four rules) gives a reference for how much each gain could be foreseen.</td></tr>
+    </table>
+    <figcaption><b>Table 3.</b> The preliminary setup. One model, two runs per option, small sample: read only the direction. Claude estimated the gain of 32 records placed where it chose; we ran one record per visible setting.</figcaption>
+  </figure>
 
   <h3>1 · It knows where data help, not how much</h3>
   <figure>
@@ -330,7 +345,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <div class="cs">Each dot is one of the 24 moments. On the diagonal the estimate would be exactly right.</div>
       <div class="chart"></div><div class="tablewrap hidden"></div>
     </div>
-    <figcaption><b>Figure 2.</b> Gain = how much the prediction error drops. Error is the mean squared error of the predicted probabilities: an error of 0.01 means the predictions are off by about 10 percentage points on average. The lines at 0.012 mark the data price: data are worth buying to the right of the vertical line, and Claude buys only above the horizontal one. The shaded corner holds the moments where data were worth buying but Claude's estimate said no. An ideal statistician's estimate of the same gains, not shown, is close to the actual ones.</figcaption>
+    <figcaption><b>Figure 2.</b> Gain = how much the prediction error drops (Table 3). The lines at 0.012 mark the data price: data are worth buying to the right of the vertical line, and Claude buys only above the horizontal one. The shaded corner holds the moments where data were worth buying but Claude's estimate said no. Actual gain: averaged over two runs. Claude's estimate: its answer averaged over the three prices. An ideal statistician's estimate of the same gains, not shown, is close to the actual ones.</figcaption>
   </figure>
   <div class="stats">
     <div class="stat"><div class="v">4–10×</div><div class="k">how much it underestimated the largest gains</div></div>
@@ -347,7 +362,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <div class="cs">Re-analysis costs nothing; data price 0.012</div>
       <div class="chart"></div><div class="tablewrap hidden"></div>
     </div>
-    <figcaption><b>Figure 3.</b> "Best choice in each case" picks, after the fact, the best of stop, re-analyze and buy data for each moment, so it is an upper bound. With plenty of data, always re-analyzing is almost as good. With little data it is not: some moments can only be fixed by new data.</figcaption>
+    <figcaption><b>Figure 3.</b> "Best choice in each case" picks, after the fact, the best of stop, re-analyze and buy data for each moment, so it is an upper bound. First version of the task text only (12 moments). With plenty of data, always re-analyzing is almost as good. With little data it is not: some moments can only be fixed by new data. Part of the re-analysis gain is an artifact: half of the extra windows hit the output-token cap, and in one task a cut-off window had to submit a simpler answer that happened to be better. The pilot gives each window a generous cap.</figcaption>
   </figure>
 
   <h3>3 · It saw what it could not test</h3>
@@ -376,6 +391,14 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   <h2>Experiment setup</h2>
   <p class="lede">The core design: at each decision point we save the agent's state, ask what each option would gain and which one it would take, and then run every option from the same save. Each option's realized gain is what its estimate is scored against. The pilot runs one agent (Claude Sonnet 5.5) on a small toy causal model built for this question.</p>
 
+  <div class="box"><div class="lbl">terms used below</div><ul class="steps">
+    <li><b>Window.</b> One stretch of analysis: the agent reads the data, runs Python, and submits an answer.</li>
+    <li><b>Decision point.</b> The moment right after it submits, when it could stop or take another step.</li>
+    <li><b>Discarded copy.</b> A copy of the saved state where we ask questions; it is thrown away, so the questions cannot change later runs.</li>
+    <li><b>Branch.</b> One option, run for real from the saved state.</li>
+    <li><b>Realized gain.</b> Error before the step minus error after it, minus the price of any data bought.</li>
+  </ul></div>
+
   <h3>The environment: a toy causal model</h3>
   <p>The model only generates the data; the agent's task is prediction, not causal discovery.</p>
   <div class="box"><div class="lbl">setup</div>
@@ -389,7 +412,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td class="n">F2 · confounding</td><td class="g">S differs between treated and untreated</td><td class="g">a randomized batch; observational data cannot identify the bias, so revising can only hedge</td></tr>
       <tr><td class="n">F3 · one lab reads high</td><td class="g">a site difference, which could also be real</td><td class="g">re-test stored samples at the reference lab</td></tr>
     </table>
-    <figcaption><b>Table 3.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. The ideal observer averages over F0–F3 (closed form except one one-dimensional integral). Every task offers every option, whatever the truth.</figcaption>
+    <figcaption><b>Table 4.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. The ideal observer averages over F0–F3 (closed form except one one-dimensional integral). Every task offers every option, whatever the truth.</figcaption>
   </figure>
   <div class="two">
     <div class="box"><div class="lbl">why causal</div><ul>
@@ -411,7 +434,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td class="n">Returns</td><td>The predicted mean outcome with and without treatment in the target population, and one sentence stating its working model</td></tr>
       <tr><td class="n">Scored by</td><td>Squared error of the two predicted means against the true values, as the reference lab would measure them</td></tr>
     </table>
-    <figcaption><b>Table 4.</b> The stated working model tells us which model class the agent is in, and whether a step actually changed it.</figcaption>
+    <figcaption><b>Table 5.</b> The stated working model tells us which model class the agent is in, and whether a step actually changed it.</figcaption>
   </figure>
 
   <h3>The options</h3>
@@ -426,7 +449,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td class="n">X2 · randomized batch</td><td class="g">units with treatment assigned at random</td><td class="g">more expensive</td></tr>
       <tr><td class="n">X3 · reference-lab re-test</td><td class="g">stored samples measured again at the reference lab</td><td class="g">more expensive</td></tr>
     </table>
-    <figcaption><b>Table 5.</b> Prices come in two levels, set by simulation before the run. Every task lists every option, whatever the truth.</figcaption>
+    <figcaption><b>Table 6.</b> Prices come in two levels, set by simulation before the run. Every task lists every option, whatever the truth.</figcaption>
   </figure>
 
   <h3>One trial, step by step</h3>
@@ -443,7 +466,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <li>How likely is it that more analysis makes the answer worse?</li>
     </ul>
   </div>
-  <div class="chainbox"><div class="lbl">then, from the same save: every branch to the end of the budget, twice</div>
+  <div class="chainbox"><div class="lbl">then, from the same save: every branch for two more windows (the rest of the budget)</div>
     <div class="chain">
       <span class="chip">STOP</span><span class="chip k">A</span><span class="chip b">R</span><span class="chip k">D</span><span class="chip b">X1</span><span class="chip b">X2</span><span class="chip b">X3</span><span class="arrow">+</span>
       <span class="chip">controls: plain continue · "confirm or revise" · generic review</span>
@@ -492,7 +515,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   </ul></div>
 
   <h3>Scale and stopping rules</h3>
-  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, second runs, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
+  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options, one run each. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, a second run of the main branches, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
   <figure>
     <table class="t">
       <tr><th style="width:48%">We stop or change course if…</th><th>Then</th></tr>
@@ -501,7 +524,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
       <tr><td>many coded steps fall outside the four kinds</td><td class="g">add or split a kind before the application environment</td></tr>
     </table>
-    <figcaption><b>Table 6.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
+    <figcaption><b>Table 7.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
   </figure>
 </section>
 
