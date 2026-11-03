@@ -106,6 +106,8 @@ figcaption b { color: var(--ink); font-family: var(--mono); font-weight: 500; fo
 .qc .d { font-size: 14px; color: var(--ink-2); margin-top: 4px; line-height: 1.45; }
 .stop { font-size: 14px; color: var(--ink-2); margin-top: 10px; padding-left: 98px; }
 
+details > summary { cursor: pointer; color: var(--back-ink); padding: 10px 0; }
+details[open] > summary { margin-bottom: 14px; }
 /* tables */
 table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; }
 table.t th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; border-bottom: 1.5px solid var(--ink); }
@@ -204,17 +206,23 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   <a class="l" href="#motivation">Motivation</a>
   <a class="l" href="#preliminary">Preliminary results</a>
   <a class="l" href="#questions">Questions</a>
-  <a class="l" href="#setup">Setup</a>
+  <a class="l" href="#setup">Proposed setup</a>
+  <a class="l" href="meeting.html">中文讲解</a>
   <button id="theme" aria-label="Toggle dark theme">◐</button>
 </div></nav>
 
 <main id="main">
 <header class="hero" id="top">
+  <div class="callout" style="margin:0 0 30px" role="note">
+    <div class="lbl">Status · audited 3 November 2026</div>
+    <p><b>Completed:</b> the earlier switch-box pilot, with three choices: STOP, ANALYZE, SAMPLE. <b>Proposed, not implemented or run:</b> the causal toy and its four candidate action categories. These categories are a design hypothesis, not a validated ontology.</p>
+    <p><a href="meeting.html"><b>中文 meeting 讲解 →</b></a> &nbsp; <a href="#preliminary">Go to completed pilot evidence →</a></p>
+  </div>
   <div class="hero-grid">
     <div>
       <h1>Which way <em>next</em>?</h1>
       <p class="kick">Do research agents know what each next step is worth?</p>
-      <p class="sub">Research agents act on their own estimates of what each next step is worth. We measure those estimates against what each step actually achieves, by running every option from the same decision point: analyze more, rethink the explanation, collect more of the same data, or run an experiment that tells explanations apart. In our first runs, Claude's estimates are ordered right but sized wrong.</p>
+      <p class="sub">We study whether research agents can judge which next step is worth taking. An earlier switch-box pilot compared estimated gains with executed continuations for STOP, ANALYZE and SAMPLE. It suggests a gap between ranking and gain magnitude in this small setting. A broader causal setup and four action categories below remain proposals; their implementation, evaluation and novelty are unresolved.</p>
     </div>
     <figure class="forkfig">
       <svg viewBox="0 0 340 220" width="100%" role="img" aria-label="From one saved state, every next move is run">
@@ -235,7 +243,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
           </g>
         </g>
       </svg>
-      <figcaption>At one saved moment, ask the agent what each move would gain; then run every move and see what it really gains.</figcaption>
+      <figcaption>Proposed extension: compare candidate continuations from one saved state. The completed pilot below used only STOP, ANALYZE and SAMPLE.</figcaption>
     </figure>
   </div>
   <ol class="rqs">
@@ -248,8 +256,10 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 
 <!-- ============ the decision ============ -->
 <section id="decision">
-  <h2>Four kinds of next step</h2>
-  <p class="lede">An analysis agent can do almost anything next. We group its open-ended actions by two questions: does the information come from the data at hand or from new data, and is the step meant to refine the current explanation or to test whether it is right?</p>
+  <h2>Proposed vocabulary: four kinds of next step</h2>
+  <p class="lede">This unvalidated grouping is a proposal for discussing open-ended actions, not a result from the completed pilot. We ask two questions: does the information come from the data at hand or from new data, and is the step meant to refine the current explanation or to test whether it is right?</p>
+  <details><summary><b>Expand proposed design (not run)</b></summary>
+
   <figure>
     <div class="quad">
       <div></div><div class="h k">refine the current explanation</div><div class="h b">question the current explanation</div>
@@ -261,10 +271,10 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <div class="qc b"><div class="t"><span>X</span>Diagnostic experiment</div><div class="d">new data that can tell the current explanation from an alternative</div></div>
     </div>
     <div class="stop">… or stop.</div>
-    <figcaption><b>Figure 1.</b> Four kinds of next step. Each answers a different shortfall: the analysis is not finished (A), the explanation may be wrong (R), there is too little data (D), or the data cannot separate the explanations (X). Analysis has no price in money, but every policy shares one finite analysis budget; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
+    <figcaption><b>Figure 1.</b> Proposed categories, not separately tested actions in the completed pilot. Each answers a different shortfall: the analysis is not finished (A), the explanation may be wrong (R), there is too little data (D), or the data cannot separate the explanations (X). In this proposal, analysis would use a shared finite budget; the completed pilot separately charges c_a=0.002; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
   </figure>
 
-  <h3>Same first answer, four different right moves</h3>
+  <h3>Illustration for the proposed setup</h3>
   <p>An analyst asks whether a drug lowers blood pressure, using records from two hospitals, and must predict its effect in an older population. The working model is <i>the same effect for every patient, after adjusting for severity</i>. What should come next depends on what is actually true:</p>
   <figure>
     <table class="t">
@@ -274,46 +284,35 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td>Sicker patients were treated more often</td><td><b>X</b> <span class="g">— a small randomized batch; reanalysis can hedge but not remove the bias</span></td></tr>
       <tr><td>One hospital's lab reads high</td><td><b>R</b> or <b>X</b> <span class="g">— re-test samples at a reference lab</span></td></tr>
     </table>
-    <figcaption><b>Table 1.</b> The right move depends on the hidden truth, and also on how much this agent has already got out of the data.</figcaption>
+    <figcaption><b>Table 1.</b> Illustrative hypotheses, not measured outcomes. A feasible move depends on the evidence available to the agent, its costs, and what it can execute; hidden truth alone does not establish what it should have known.</figcaption>
   </figure>
+
+  </details>
 </section>
 
 <!-- ============ motivation ============ -->
 <section id="motivation">
-  <h2>Motivation</h2>
-  <p class="lede">Agents choose their next step by what they expect it to gain. Nobody has checked those expectations against what the step actually gains.</p>
-  <div class="two">
-    <div class="box"><div class="lbl">known</div><ul>
-      <li>Research agents keep tuning when they should rethink <span class="cite">(ResearchGym; "frame-lock" in AutoResearch)</span>, judged from traces afterwards.</li>
-      <li>Decision methods compare candidates by running them. LLM-IDEA runs every candidate experiment from the same data and reports regret; Outgrow a Theory learns when and how to revise a model class.</li>
-      <li>Information seeking goes wrong both ways: models stop asking before they have enough <span class="cite">(MT-InfoSeek)</span>, and pay for checks that cannot change the decision <span class="cite">(DIVA)</span>.</li>
-    </ul></div>
-    <div class="box b"><div class="lbl">missing</div><ul>
-      <li>In the decision methods, a fixed criterion or a learned policy makes the choice, and only one kind of step is compared.</li>
-      <li>Nobody has compared an LLM agent's own estimate of a step with what that step achieves from the same state, across different kinds of step.</li>
-      <li>So we cannot say when an agent underrates a step and when it overrates one.</li>
-    </ul></div>
-  </div>
-  <p>Running every option from the same state is our measuring tool, the way a randomized trial is for a drug; it is not new by itself. Others use it to train a controller or to compare fixed criteria. We use it to score the agent's own estimate of each step: does it know which step helps more, by how much, does it act on that, and does it carry the step out?</p>
-  <figure>
-    <div class="tscroll"><table class="t">
-      <tr><th style="width:30%"></th><th>Observe traces</th><th>Information seeking</th><th>Decision methods</th><th>Fork one state</th><th class="us">This work</th></tr>
-      <tr><td>Compare the LLM's own estimate with each step's real gain</td><td class="no">no</td><td class="no">partly</td><td class="no">no</td><td class="no">no; trains a controller</td><td class="y us">yes</td></tr>
-      <tr><td>Run several moves from the same state</td><td class="no">no</td><td class="no">no</td><td class="y">yes, experiments</td><td class="y">yes</td><td class="y us">yes</td></tr>
-      <tr><td>Know the best possible answer</td><td class="no">no</td><td class="y">yes</td><td class="y">yes</td><td class="no">no</td><td class="y us">yes</td></tr>
-      <tr><td>Compare four kinds of step</td><td class="no">after the fact</td><td class="no">one kind</td><td class="no">one kind</td><td class="no">no</td><td class="y us">yes</td></tr>
-    </table></div>
-    <figcaption><b>Table 2.</b> Observe: ResearchGym, AutoResearch, AARRI-Bench. Information seeking: MT-InfoSeek scores the model's guess of how much information is missing, DIVA the regret of the checks it buys. Decision methods: LLM-IDEA (its §5.9 runs each candidate experiment from the same data), Learning to Outgrow a Theory. Fork: SURE-Act, PORA, DIAL. The closest setting, ACED-Bench, hides a causal model behind natural-language scenarios but reports only failure modes.</figcaption>
-  </figure>
+  <h2>Motivation and closest evidence</h2>
+  <p class="lede">Existing work already studies research judgment, recovery, evidence use and diagnostic experimentation. Our broad motivation is credible; a distinct contribution has not yet been established.</p>
+  <p>We want to distinguish estimating value, choosing an action and executing it. Continuing different actions from a saved state can reveal outcome differences. It does not, by itself, prove that the agent could have anticipated the better outcome with the evidence it had.</p>
+  <figure><div class="tscroll"><table class="t">
+    <tr><th>Nearby work</th><th>What it already studies</th><th>Boundary relevant here</th></tr>
+    <tr><td class="n">The Tasteful Agent</td><td>Judging two supplied next-step alternatives; 112 research items, plus engineering training and transfer.</td><td>Supplied-option judgment differs from autonomously generating an alternative or detecting when one is needed.</td></tr>
+    <tr><td class="n">SAGE</td><td>Multiple failure explanations, critic assessment and hierarchical recovery; more metrics-bearing artifacts in a 12-topic evaluation.</td><td>Failure attribution and recovery routing already exist. Critic verification is not experimental identification of the cause.</td></tr>
+    <tr><td class="n">CORRAL</td><td>Task outcomes, evidence/revision graphs and successful-prefix interventions.</td><td>Process evaluation already exists. Graph motifs do not alone establish avoidable decision errors; some appendix narrative statistics conflict with the main results.</td></tr>
+    <tr><td class="n">LLM-IDEA · Outgrow a Theory</td><td>Identifiability diagnostics, discriminating experiments, and coupled theory revision/experiment selection.</td><td>“Diagnose before changing course” is already covered. Open implementation uncertainty and diagnosis cost need a closer comparison.</td></tr>
+    <tr><td class="n">Metacognitive Steering</td><td>Steering exploration, convergence and scrutiny; behavioral and application demonstrations.</td><td>Changing a research regime does not establish the best time to change it; application systems contain other components.</td></tr>
+  </table></div><figcaption><b>Table 2.</b> Scope of sources read in the current literature review. These are evidence boundaries, not a yes/no novelty scorecard. See <a href="meeting.html">the Chinese meeting guide</a> and the evidence locations below.</figcaption></figure>
+  <div class="callout"><div class="lbl">Working question, not a novelty claim</div><p>When a poor result has several plausible explanations, can an agent judge what the evidence rules out and whether another diagnostic check is worth its cost? We are also considering whether the main bottleneck is generating useful alternatives. Real trace analysis should decide between these candidates.</p></div>
 </section>
 
 <!-- ============ preliminary ============ -->
 <section id="preliminary">
-  <h2>Preliminary results</h2>
-  <p class="lede">In one sentence: Claude's estimates of what new data would gain are ordered right but sized wrong. It knows roughly where data would help, but thinks they help several times less than they do, so it stops too early.</p>
+  <h2>Completed switch-box pilot: preliminary results</h2>
+  <p class="lede">In this pilot, estimated data gains show some useful ordering but underestimate the largest observed gains. The agent often chooses STOP. This is descriptive evidence from a small synthetic task family, not a general result about research agents or a proven cause of their decisions.</p>
 
   <h3>What we ran</h3>
-  <p>These runs used an earlier toy, the <b>switch box</b>, with one agent, Claude Sonnet 5.5. They follow the pilot's plan with fewer options: save a moment, ask Claude what each option would gain, then run the options and see what they really gain.</p>
+  <p>These completed runs used the <b>switch box</b> and the configured model string <code>claude-sonnet-5-5</code> through the Claude CLI. The underlying serving snapshot has not been independently verified. The decision menu was <b>STOP, ANALYZE, SAMPLE</b>; A and R were not separately executed conditions.</p>
   <div class="chainbox"><div class="lbl">at each of the 24 moments</div>
     <div class="chain">
       <span class="chip"><i>1</i>Claude's first answer</span><span class="arrow">→</span>
@@ -325,59 +324,60 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
   </div>
   <figure>
     <table class="t">
-      <tr><td class="n" style="width:22%">The box</td><td>Six on/off switches, so 64 settings. Pressing a button lights a lamp with a probability that depends only on the setting. The hidden rule is one of four: no effect; one switch matters (±0.2); two switches interact (±0.3); or both.</td></tr>
-      <tr><td class="n">The data</td><td>A record is one press: a setting and whether the lamp lit. Claude gets 32 or 128 records, and only for the 32 settings with an even number of switches on.</td></tr>
-      <tr><td class="n">The answer</td><td>A lamp probability for all 64 settings, scored on the 32 settings it never sees: mean squared error against the true probabilities. An error of 0.01 means about 10 percentage points off.</td></tr>
-      <tr><td class="n">First answer</td><td>One analysis window: Claude reads the data, runs Python up to 4 times, and submits.</td></tr>
-      <tr><td class="n">The 24 moments</td><td>12 tasks (4 rules × 3 seeds: 8 tasks with 128 records, 4 with 32), each run in two versions of the task text, with and without one sentence saying that effects of three or more switches are rare. Each moment is saved right after the first answer.</td></tr>
+      <tr><td class="n" style="width:22%">The box</td><td>Six on/off switches, so 64 settings. Pressing a button lights a lamp with a probability that depends only on the setting. The hidden rule is one of four: A: no effect; B: one pairwise interaction (±0.3); C: one main effect (±0.2); D: a main effect (±0.2) plus a pairwise interaction (±0.2).</td></tr>
+      <tr><td class="n">The data</td><td>A record is one press: a setting and whether the lamp lit. The agent gets records only for the 32 settings with an even number of switches on: N=32 gives one observation per visible setting; N=128 gives four per setting.</td></tr>
+      <tr><td class="n">The answer</td><td>A lamp probability for all 64 settings, scored on the 32 settings it never sees: mean squared error against the true probabilities. MSE 0.01 corresponds to RMSE 0.10 (10 percentage points), not a 10-point error at every setting.</td></tr>
+      <tr><td class="n">First answer</td><td>One analysis window: up to 4 Python runs and 8,000 output tokens including thinking, followed by submission. Truncation affected some continuations.</td></tr>
+      <tr><td class="n">The 24 moments</td><td>12 tasks (4 rules × 3 seeds: 8 tasks with 128 records, 4 with 32), each run in two versions of the task text, with and without one sentence saying that effects of three or more switches are rare. Each moment is saved right after the first answer. These are 12 tasks × 2 prompt conditions, not 24 independent tasks. CLI truncation handling also differed between the two runs (restart versus truncate), so this is not a clean causal ablation of the hint.</td></tr>
       <tr><td class="n">What we asked</td><td>In copies we then threw away: you may stop (free), analyze one more window (price 0.002), or get 32 new records and analyze (0.002 plus a data price of 0.004, 0.012 or 0.03). How much would each lower your error, and which do you choose?</td></tr>
-      <tr><td class="n">What we ran</td><td>From the same save, each twice: 32 new records (one per visible setting), then one window; and four more windows on the same data, each opening with a review prompt.</td></tr>
-      <tr><td class="n">Actual gain</td><td>Error at the first answer minus error after the option, averaged over the two runs. An ideal statistician (a Bayesian observer that knows the four rules) gives a reference for how much each gain could be foreseen.</td></tr>
+      <tr><td class="n">What we ran</td><td>From the same save, two repetitions of SAMPLE (+32 balanced records, then one review window) and two ANALYZE chains (four successive review windows on unchanged data). Figure 3 uses the first extra window to match the one-window decision menu; the later windows are a separate continuation analysis.</td></tr>
+      <tr><td class="n">Actual gain</td><td>Raw gain = initial MSE minus branch MSE, averaged over two repetitions. Net gain subtracts the action cost: 0 for STOP, c_a=0.002 for +1 ANALYZE, c_a+c_d for SAMPLE. Ref-G is a Bayesian reference given the true generator families, an additional prior unavailable in general; it is not a universal oracle.</td></tr>
     </table>
     <figcaption><b>Table 3.</b> The preliminary setup. One model, two runs per option, small sample: read only the direction. Claude estimated the gain of 32 records placed where it chose; we ran one record per visible setting.</figcaption>
   </figure>
 
-  <h3>One moment, step by step</h3>
+  <h3>One moment, reconstructed from the earlier report</h3>
+  <p>The following C-s22 transcript details and quotations come from the earlier project report. The raw pilot transcripts were not re-read in this audit and are not present in this local checkout.</p>
   <div class="box"><div class="lbl">task C-s22: 32 records, one moment</div><ul class="steps">
     <li><b>The truth.</b> The lamp lights 70% of the time when switch 1 is on and 30% when it is off. No other switch matters.</li>
-    <li><b>Claude's first answer.</b> In these 32 presses, more switches on happened to mean more light (2 switches on: 3 of 15 lit; 4 on: 8 of 15), and switch 1 looked only mildly useful (on: 8 of 16 lit; off: 4 of 16). A leave-one-out comparison picked "number of switches on" as the model, predicting 7% with none on up to 80% with all on. Error 0.057, about 24 points off per setting.</li>
-    <li><b>What it said when asked.</b> 32 more records would lower the error by about 0.005, far below their price, because "on the even subspace each Fourier term is indistinguishable from its complement … no even-parity sample can resolve that." It chose stop at all three prices.</li>
-    <li><b>What actually happened.</b> Given 32 more records (a second press of each visible setting), switch 1 stood out (on: 69% lit; off: 28%). Claude refit switch 1 plus the count, and the error fell to 0.009: a gain of 0.048, about ten times its estimate. Four more windows without new data moved the error only to 0.054.</li>
-    <li><b>The lesson.</b> Its reason is true of the box in general, but not the cause here: this error came from noise in 32 presses, and more presses fixed it.</li>
+    <li><b>Claude's first answer.</b> In these 32 presses, more switches on happened to mean more light (2 switches on: 3 of 15 lit; 4 on: 8 of 15), and switch 1 looked only mildly useful (on: 8 of 16 lit; off: 4 of 16). A leave-one-out comparison picked "number of switches on" as the model, predicting 7% with none on up to 80% with all on. MSE 0.057, equivalent to about 24 percentage points RMSE across settings.</li>
+    <li><b>What it said when asked.</b> The earlier report summarizes the three-price mean estimate as about 0.0053 (Figure 2 instead uses the single-price estimate 0.004), because "on the even subspace each Fourier term is indistinguishable from its complement … no even-parity sample can resolve that." It chose stop at all three prices.</li>
+    <li><b>What actually happened.</b> Given 32 more records (a second press of each visible setting), switch 1 stood out (on: 69% lit; off: 28%). Claude refit switch 1 plus the count, and the error fell to 0.009: a gain of 0.048, about nine times the earlier three-price mean estimate. Four more windows without new data moved the error only to 0.054.</li>
+    <li><b>What this supports.</b> Extra balanced observations coincided with a large error reduction in this continuation. The structural aliasing concern remains real. This example does not isolate sampling noise as the root cause, since the subsequent analysis also changed.</li>
   </ul></div>
 
-  <h3>1 · It knows where data help, not how much</h3>
+  <h3>1 · Ranking and magnitude differ in this pilot</h3>
   <figure>
     <div class="chart-card" id="c1">
       <button class="viewtable" data-for="c1">table</button>
       <div class="ct">Claude's estimate against the actual gain from 32 more records</div>
-      <div class="cs">Each dot is one of the 24 moments. On the diagonal the estimate would be exactly right.</div>
+      <div class="cs">24 states = 12 tasks × 2 conditions. Estimate elicited at c_d=0.012; raw gain from +32 balanced records and one window.</div>
       <div class="chart"></div><div class="tablewrap hidden"></div>
     </div>
-    <figcaption><b>Figure 2.</b> Gain = how much the prediction error drops (Table 3). The lines at 0.012 mark the data price: data are worth buying to the right of the vertical line, and Claude buys only above the horizontal one. The shaded corner holds the moments where data were worth buying but Claude's estimate said no. Actual gain: averaged over two runs. Claude's estimate: its answer averaged over the three prices. An ideal statistician's estimate of the same gains, not shown, is close to the actual ones.</figcaption>
+    <figcaption><b>Figure 2.</b> Both axes are <b>raw MSE reduction</b>. Each estimate comes from that state’s single probe at c_d=0.012. The threshold is <b>0.014 = c_a + c_d</b>: crossing it makes SAMPLE better than STOP only. To be globally best, SAMPLE must also beat ANALYZE (g<sub>D</sub> − g<sub>A</sub> ≥ c_d). The shaded area marks a missed SAMPLE-versus-STOP opportunity, not the full choice rule. Realized gains average two runs; the estimated data allocation differs from the balanced allocation actually executed. Ref-G in the table is G<sup>G</sup>(q0)+EVSI<sup>G</sup>, a generator-informed reference with extra prior information.</figcaption>
   </figure>
   <div class="stats">
-    <div class="stat"><div class="v">4–10×</div><div class="k">how much it underestimated the largest gains</div></div>
-    <div class="stat"><div class="v">0<small> of 3</small></div><div class="k">moments worth buying at this price where it bought</div></div>
-    <div class="stat"><div class="v">68<small> of 72</small></div><div class="k">decisions were "stop", the same as a rule that always stops</div></div>
+    <div class="stat"><div class="v">5–12×</div><div class="k">underestimation for the two largest gains at c_d=0.012</div></div>
+    <div class="stat"><div class="v">0<small> of 2</small></div><div class="k">states where SAMPLE beat STOP at c_d=0.012 and the agent selected SAMPLE</div></div>
+    <div class="stat"><div class="v">68<small> of 72</small></div><div class="k">elicited choices were STOP across 24 states × 3 prices; not 72 independent tasks</div></div>
   </div>
-  <p>The order is mostly right: sorted by Claude's estimate, the moments where data really helped come first (AUC 0.88). The size is wrong, and Claude acts on its own estimates (71 of 72 decisions), so it stops. That is why we measure ranking and size separately, and why the pilot tests whether calibrating the size fixes the choice.</p>
+  <p>For predicting raw gain ≥0.002, the reported three-price-mean estimate has AUC 0.88; the single-price estimates plotted here give AUC 0.84. This “helpful” label is different from exceeding the 0.014 buying threshold. Across all 72 probes, 71 choices are arithmetically consistent with the gains reported in the same response. That is self-report consistency, not evidence that an estimated value caused the action. Agent choice and always-STOP have approximately the same mean regret across prices: 0.00300 versus 0.00302, despite different choices.</p>
 
-  <h3>2 · Re-analyzing the same data is cheap and usually worth it</h3>
+  <h3>2 · Compare the same actions at the original costs</h3>
   <figure>
     <div class="chart-card" id="c2">
       <button class="viewtable" data-for="c2">table</button>
-      <div class="ct">Total loss: prediction error plus the cost of any data bought (lower is better)</div>
-      <div class="cs">Re-analysis costs nothing; data price 0.012</div>
+      <div class="ct">Matched-cost loss: prediction MSE + action cost (lower is better)</div>
+      <div class="cs">Original costs: c_a=0.002, c_d=0.012 · +1 analysis window · separate prompt conditions</div>
       <div class="chart"></div><div class="tablewrap hidden"></div>
     </div>
-    <figcaption><b>Figure 3.</b> "Best choice in each case" picks, after the fact, the best of stop, re-analyze and buy data for each moment, so it is an upper bound. First version of the task text only (12 moments). With plenty of data, always re-analyzing is almost as good. With little data it is not: some moments can only be fixed by new data. Part of the re-analysis gain is an artifact: half of the extra windows hit the output-token cap, and in one task a cut-off window had to submit a simpler answer that happened to be better. The pilot gives each window a generous cap.</figcaption>
+    <figcaption><b>Figure 3.</b> STOP loss = q0 MSE; ANALYZE = +1-window MSE +0.002; SAMPLE = +32-record, +1-window MSE +0.014. Each group contains the same 12 tasks; the CLI truncation/restart behavior also changed between runs, so group differences cannot be attributed solely to the hint. “Agent’s elicited choice” maps the probe choice at c_d=0.012 to that branch’s measured mean; it is not an additional autonomous rollout. “Hindsight minimum” selects the minimum of noisy branch means in each state, then averages; it is a descriptive reference, not a deployable policy or a known population optimum. The former free-analysis/+4-window chart used a different, post hoc objective and has been removed from the main comparison.</figcaption>
   </figure>
 
-  <h3>3 · It saw what it could not test</h3>
+  <h3>3 · The action menu limits what this pilot can show</h3>
   <div class="callout">
-    <div class="lbl">why the pilot needs a new toy</div>
-    <p>The switch box hides half of the switch settings. In all 12 tasks Claude pointed out that its records could not tell two explanations apart on that hidden half, but the task gave it no way to collect records there. So "test the explanation with a new kind of data" was impossible in this toy. The pilot's toy causal model (§05, Experiment setup) is built so that it is possible.</p>
+    <div class="lbl">a limitation, not evidence that a particular replacement is required</div>
+    <p>The switch box hides half of the switch settings. The earlier report describes the agent recognizing aliasing on the hidden half; the task offered no way to collect observations there. So "test the explanation with a new kind of data" was impossible in this toy. The causal toy below was proposed to add diagnostic actions. It has not been implemented or run, and real-trace evidence may favor a different design.</p>
   </div>
 </section>
 
@@ -397,19 +397,22 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
 
 <!-- ============ setup ============ -->
 <section id="setup">
-  <h2>Experiment setup</h2>
-  <p class="lede">The core design: at each decision point we save the agent's state, ask what each option would gain and which one it would take, and then run every option from the same save. Each option's realized gain is what its estimate is scored against. The pilot runs one agent (Claude Sonnet 5.5) on a small toy causal model built for this question.</p>
+  <h2>Proposed causal setup — not implemented or run</h2>
+  <p class="lede">Everything in this section is a proposed design, not completed work. The intended design would save a decision state, elicit estimates in a discarded copy, and execute candidate continuations. Neither the causal generator, its reference observer, the four-category menu, nor its agent runs have been implemented. Model choice and protocol remain to be decided after reviewing real traces.</p>
+  <details><summary><b>Expand proposed design (not run)</b></summary>
+
 
   <div class="box"><div class="lbl">terms used below</div><ul class="steps">
     <li><b>Window.</b> One stretch of analysis: the agent reads the data, runs Python, and submits an answer.</li>
     <li><b>Decision point.</b> The moment right after it submits, when it could stop or take another step.</li>
     <li><b>Discarded copy.</b> A copy of the saved state where we ask questions; it is thrown away, so the questions cannot change later runs.</li>
     <li><b>Branch.</b> One option, run for real from the saved state.</li>
-    <li><b>Realized gain.</b> Error before the step minus error after it, minus the price of any data bought.</li>
+    <li><b>Raw gain.</b> Error before the step minus error after it.</li>
+    <li><b>Net gain.</b> Raw gain minus the explicitly specified action cost. Planned causal-toy costs are not yet frozen; do not confuse them with the completed pilot costs above.</li>
   </ul></div>
 
-  <h3>The environment: a toy causal model</h3>
-  <p>The model only generates the data; the agent's task is prediction, not causal discovery.</p>
+  <h3>Proposed environment: a toy causal model</h3>
+  <p>The proposed model would generate synthetic records only. Before implementation, the target must distinguish intervention means E[Y | do(T=t), target population] from observational conditional means E[Y | T=t, target population]. They differ under confounding; calling the task prediction does not settle this choice. No generator or identifiability claim has yet been validated.</p>
   <div class="box"><div class="lbl">setup</div>
     <p style="font-size:16.5px">Records from two sites: age <code>A</code>, a baseline score <code>S</code>, treated or not <code>T</code>, outcome <code>Y</code>. Predict the mean outcome with and without treatment in an <b>older</b> target population, as measured by a reference lab.</p>
   </div>
@@ -418,19 +421,19 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><th style="width:27%">Hidden truth</th><th style="width:34%">Sign in the existing data</th><th>Diagnostic experiment (X)</th></tr>
       <tr><td class="n">F0 · simple model is right</td><td class="g">nothing beyond noise</td><td class="g">not needed, though a randomized batch may add precision; revising may keep the simple model or add false structure</td></tr>
       <tr><td class="n">F1 · effect changes with age</td><td class="g">a weak treatment × age interaction</td><td class="g">recruit units in the target age range</td></tr>
-      <tr><td class="n">F2 · confounding</td><td class="g">S differs between treated and untreated</td><td class="g">a randomized batch; observational data cannot identify the bias, so revising can only hedge</td></tr>
+      <tr><td class="n">F2 · confounding</td><td class="g">S may differ between treated and untreated; this alone does not diagnose hidden confounding</td><td class="g">candidate randomized batch; identification properties must be specified and verified</td></tr>
       <tr><td class="n">F3 · one lab reads high</td><td class="g">a site difference, which could also be real</td><td class="g">re-test stored samples at the reference lab</td></tr>
     </table>
-    <figcaption><b>Table 4.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. The ideal observer averages over F0–F3 (closed form except one one-dimensional integral). Every task offers every option, whatever the truth.</figcaption>
+    <figcaption><b>Table 4.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. A planned reference observer would average over F0–F3; the proposed closed-form/integration calculation has not been implemented or verified. The intended menu would offer every option in every task.</figcaption>
   </figure>
   <div class="two">
     <div class="box"><div class="lbl">why causal</div><ul>
-      <li>"More of the same data cannot settle it" holds by theory: unmeasured confounding and a real effect fit observational data equally well.</li>
-      <li>Each way of going wrong needs its own kind of evidence, so the remedies have clearly different values from state to state.</li>
+      <li>Design target: construct alternatives that observational data cannot distinguish but a diagnostic action can. The proposed F0/F2 observational equivalence has not been proved or implemented.</li>
+      <li>The design aims to create states where different evidence sources have different values; this must be verified rather than assumed.</li>
     </ul></div>
     <div class="box"><div class="lbl">why build our own</div><ul>
-      <li>We need look-alike truths, an exact ideal observer and all four remedies together.</li>
-      <li>BoxingGym has one fixed model per environment and no reanalysis action; ACED-Bench does not run remedies from one state.</li>
+      <li>The proposal seeks look-alike truths, a tractable reference and several remedies; whether a new environment is necessary remains open.</li>
+      <li>Existing environments and recent diagnosis/revision systems must be compared before committing to a custom toy.</li>
     </ul></div>
   </div>
 
@@ -443,10 +446,10 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td class="n">Returns</td><td>The predicted mean outcome with and without treatment in the target population, and one sentence stating its working model</td></tr>
       <tr><td class="n">Scored by</td><td>Squared error of the two predicted means against the true values, as the reference lab would measure them</td></tr>
     </table>
-    <figcaption><b>Table 5.</b> The stated working model tells us which model class the agent is in, and whether a step actually changed it.</figcaption>
+    <figcaption><b>Table 5.</b> Planned observables: stated working model and executed code. A one-sentence self-report alone cannot establish the agent’s internal model or whether it truly changed.</figcaption>
   </figure>
 
-  <h3>The options</h3>
+  <h3>Proposed options — A and R not separately tested</h3>
   <figure>
     <table class="t">
       <tr><th style="width:30%">Option</th><th>What happens</th><th style="width:26%">Cost</th></tr>
@@ -458,10 +461,10 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td class="n">X2 · randomized batch</td><td class="g">units with treatment assigned at random</td><td class="g">more expensive</td></tr>
       <tr><td class="n">X3 · reference-lab re-test</td><td class="g">stored samples measured again at the reference lab</td><td class="g">more expensive</td></tr>
     </table>
-    <figcaption><b>Table 6.</b> Prices come in two levels, set by simulation before the run. Every task lists every option, whatever the truth.</figcaption>
+    <figcaption><b>Table 6.</b> The proposal calls for two price levels, to be selected by simulation before any future run; neither calibration nor runs are complete. Every task lists every option, whatever the truth.</figcaption>
   </figure>
 
-  <h3>One trial, step by step</h3>
+  <h3>Planned trial, step by step</h3>
   <div class="chainbox"><div class="lbl">at one decision point</div>
     <div class="chain">
       <span class="chip"><i>1</i>first analysis window; the agent decides when to submit</span><span class="arrow">→</span>
@@ -487,7 +490,7 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     </div>
   </div>
   <p style="margin-top:14px">A and R are prompts, not behaviors, so step 4 checks whether the stated working model or the code really changed. An option counts as best in a state only when it clearly beats the next one.</p>
-  <p>Stage 0 forks once, right after the first answer. Stage 1 also lets the agent follow its own choices and forks again at 2–3 later decision points along that path, to see whether its estimates keep up as a step's value changes.</p>
+  <p>In the proposal, Stage 0 would fork once, right after the first answer. Stage 1 would also let the agent follow its own choices and fork again at 2–3 later decision points along that path, to see whether its estimates keep up as a step's value changes.</p>
 
   <h3>Conditions and comparisons</h3>
   <div class="two">
@@ -512,19 +515,19 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
     <div class="box b"><div class="lbl">the repair: value calibration</div><ul>
       <li><b>Feedback:</b> before deciding, the agent sees its past estimates next to the realized gains on a few practice states.</li>
       <li><b>Outside rescaling:</b> a monotone map from its estimates to realized gains, fitted on development seeds. It can fix the size, not the order, so it helps only if the ranking is good.</li>
-      <li class="cite">Tested on new seeds, at matched cost.</li>
+      <li class="cite">Would be tested on new seeds, at matched cost; no repair evaluation has run.</li>
     </ul></div>
   </div>
 
-  <h3>Do the four kinds cover what agents do?</h3>
+  <h3>Planned check: do these categories fit real actions?</h3>
   <div class="box"><div class="lbl">trace-coding check</div><ul class="steps">
-    <li><b>Why.</b> The four kinds come from two questions, top down. This small check goes bottom up: it codes each step in real agent traces as A, R, D, X, stop, or "other".</li>
-    <li><b>Traces.</b> Our 120 saved Claude analysis windows from the switch box, plus public traces of open-ended agents that can also request data or run experiments. Not the toy's traces: its menu is the four kinds by construction.</li>
+    <li><b>Why.</b> The four kinds come from two questions, top down. The proposed check would code real traces, allow mixed/other actions, and revise or reject the taxonomy. It has not been performed.</li>
+    <li><b>Traces.</b> Potential material includes saved switch-box windows and public agent traces. The raw switch-box transcripts are not in this local checkout. The proposed causal toy cannot validate its own categories, since its menu would impose them.</li>
     <li><b>Report.</b> The share of steps the four kinds cover, agreement between two coders, and what the "other" steps are. If many are "other", we change the kinds before building the application environment.</li>
   </ul></div>
 
-  <h3>Scale and stopping rules</h3>
-  <p><b>Stage 0</b> (about 300 analysis windows): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options, one run each. <b>Stage 1</b> (at most about 800) runs only if Stage 0 passes: more seeds, a second run of the main branches, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
+  <h3>Proposed scale and stopping rules — no runs started</h3>
+  <p><b>Planned Stage 0</b> (budget sketch: about 300 analysis windows, not executed): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options, one run each. <b>Planned Stage 1</b> (budget sketch: at most about 800, not executed) would run only if Stage 0 passed: more seeds, a second run of the main branches, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
   <figure>
     <table class="t">
       <tr><th style="width:48%">We stop or change course if…</th><th>Then</th></tr>
@@ -533,8 +536,24 @@ footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 1
       <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
       <tr><td>many coded steps fall outside the four kinds</td><td class="g">add or split a kind before the application environment</td></tr>
     </table>
-    <figcaption><b>Table 7.</b> Thresholds are set by simulation and frozen before the run. We do not raise the difficulty afterwards to rescue a claim.</figcaption>
+    <figcaption><b>Table 7.</b> Proposed safeguards: calibrate thresholds by simulation and freeze them before future runs. That calibration has not been carried out.</figcaption>
   </figure>
+
+  </details>
+</section>
+
+<section id="evidence">
+  <h2>Evidence locations and access</h2>
+  <p>Source paths below refer to the local project workspace; these files are not all published with this page. If private GitHub links are unavailable, use the <a href="meeting.html">Chinese meeting guide</a>, also at <code>site/meeting.html</code>.</p>
+  <div class="tscroll"><table class="t">
+    <tr><th>Evidence</th><th>Location in the project</th><th>Scope / limitation</th></tr>
+    <tr><td>Completed pilot tables</td><td><code>runs/claude_curves/summary.md</code><br><code>runs/claude_curves_hier/summary.md</code></td><td>12 tasks under two prompt conditions and different CLI truncation handling, not 24 independent tasks.</td></tr>
+    <tr><td>Original pilot interpretation</td><td><code>runs/claude_curves/FINDINGS.md</code><br><code>runs/remedy_check/FINDINGS.md</code></td><td>Earlier transcript interpretations were not revalidated against raw transcripts in this audit.</td></tr>
+    <tr><td>Cost and run implementation</td><td><code>env/scoring.py</code><br><code>harness/curves.py</code><br><code>harness/claude_cli.py</code></td><td>Model configuration string is not independent verification of the served model snapshot.</td></tr>
+    <tr><td>Corrected chart inputs</td><td><code>notes/2026-11-03/meeting-audit/plot_data.json</code></td><td>Recomputed from available summaries at the original cost and one-window horizon.</td></tr>
+    <tr><td>Literature and public trace audit</td><td><code>notes/2026-11-03/RESEARCH_SYNTHESIS.md</code><br><code>notes/2026-11-03/traces/READOUT.md</code></td><td>Literature claims and selected public examples; no new model experiments.</td></tr>
+    <tr><td>Raw switch-box transcripts</td><td>Not present in this local checkout.</td><td>Detailed transcript anecdotes remain attributed to earlier reports.</td></tr>
+  </table></div>
 </section>
 
 </main>
@@ -569,11 +588,8 @@ function hbar(p, x0, y, w, h, fill) {
   const r = Math.min(4, w);
   return el('path', { d: `M${x0},${y} H${x0 + w - r} Q${x0 + w},${y} ${x0 + w},${y + r} V${y + h - r} Q${x0 + w},${y + h} ${x0 + w - r},${y + h} H${x0} Z`, fill }, p);
 }
-const PTS = [["Main effect · 32 records", "C-s22", 0.048, 0.0053, 0.0427, "STOP"], ["Main effect · 32 records · hint", "C-s22", 0.0368, 0.005, 0.0269, "STOP"], ["No effect · 32 records · hint", "A-s22", 0.0137, 0.01, 0.0186, "STOP"], ["Main effect · 128 records · hint", "C-s21", 0.0117, 0.0023, 0.0134, "STOP"], ["Main effect · 128 records", "C-s21", 0.0109, 0.0027, 0.015, "STOP"], ["Main effect + interaction · 32 records", "D-s22", 0.0065, 0.0173, 0.0482, "ANALYZE"], ["Main effect · 128 records · hint", "C-s20", 0.0058, 0.0047, 0.022, "STOP"], ["No effect · 32 records", "A-s22", 0.0025, 0.006, 0.0141, "STOP"], ["Main effect + interaction · 128 records", "D-s21", 0.0025, 0.003, 0.0088, "STOP"], ["Interaction · 128 records", "B-s21", 0.0017, 0.0017, 0.0074, "STOP"], ["Interaction · 128 records · hint", "B-s21", 0.0016, 0.0012, 0.0035, "STOP"], ["Main effect + interaction · 32 records · hint", "D-s22", 0.0016, 0.01, 0.0283, "STOP"], ["Interaction · 128 records · hint", "B-s20", 0.0001, 0.002, 0.0023, "STOP"], ["Main effect · 128 records", "C-s20", -0.0004, 0.0033, 0.0029, "STOP"], ["Interaction · 128 records", "B-s20", -0.0005, 0.0008, 0.0177, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s20", -0.0005, 0.001, 0.0014, "STOP"], ["Main effect + interaction · 128 records", "D-s20", -0.0006, 0.002, 0.0006, "STOP"], ["No effect · 128 records · hint", "A-s20", -0.001, 0.0018, 0.0031, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s21", -0.0012, 0.001, 0.0025, "STOP"], ["No effect · 128 records", "A-s21", -0.002, 0.0018, 0.0012, "STOP"], ["No effect · 128 records", "A-s20", -0.0031, 0.002, 0.0017, "STOP"], ["No effect · 128 records · hint", "A-s21", -0.0033, 0.0012, 0.0012, "STOP"], ["Interaction · 32 records · hint", "B-s22", -0.005, 0.0035, 0.0088, "STOP"], ["Interaction · 32 records", "B-s22", -0.01, 0.003, 0.0035, "STOP"]];
-const D2 = [
-  { name: 'Plenty of data (128 records)', rows: [['Always stop', 0.0095, false], ['Always re-analyze (4 rounds)', 0.0064, false], ['Best choice in each case', 0.0059, true]] },
-  { name: 'Little data (32 records)', rows: [['Always stop', 0.0243, false], ['Always re-analyze (4 rounds)', 0.0212, false], ['Best choice in each case', 0.0130, true]] },
-];
+const PTS = [["Main effect · 32 records · no hint", "C-s22-N32", 0.048025749374999996, 0.004, 0.04270348363569067, "STOP"], ["Main effect · 32 records · hint", "C-s22-N32", 0.036806838625332225, 0.007, 0.026882522467059185, "STOP"], ["No effect · 32 records · hint", "A-s22-N32", 0.013691596933000077, 0.008, 0.01858020558639991, "STOP"], ["Main effect · 128 records · hint", "C-s21-N128", 0.011654373419236568, 0.002, 0.013378980293804743, "STOP"], ["Main effect · 128 records · no hint", "C-s21-N128", 0.010945635658619383, 0.002, 0.015042601541745873, "STOP"], ["Main effect + interaction · 32 records · no hint", "D-s22-N32", 0.006510281813785566, 0.012, 0.04824758328868448, "ANALYZE"], ["Main effect · 128 records · hint", "C-s20-N128", 0.005841467405996184, 0.005, 0.022001492214755912, "STOP"], ["No effect · 32 records · no hint", "A-s22-N32", 0.002485843738595705, 0.005, 0.01414824434397605, "STOP"], ["Main effect + interaction · 128 records · no hint", "D-s21-N128", 0.0024686139748028163, 0.004, 0.00882938805293827, "STOP"], ["Interaction · 128 records · no hint", "B-s21-N128", 0.0017022974999999982, 0.002, 0.00739793413626829, "STOP"], ["Interaction · 128 records · hint", "B-s21-N128", 0.0015648449999999985, 0.002, 0.0035459809625319814, "STOP"], ["Main effect + interaction · 32 records · hint", "D-s22-N32", 0.0015639886521141618, 0.006, 0.028264515767703467, "STOP"], ["Interaction · 128 records · hint", "B-s20-N128", 0.00011368749999999747, 0.003, 0.002302261699547777, "STOP"], ["Main effect · 128 records · no hint", "C-s20-N128", -0.0003887415241546851, 0.004, 0.0028891779137372254, "STOP"], ["Interaction · 128 records · no hint", "B-s20-N128", -0.0004553574999999997, 0.0006, 0.01770959284712849, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s20-N128", -0.0005482594515542065, 0.001, 0.0014132977189580868, "STOP"], ["Main effect + interaction · 128 records · no hint", "D-s20-N128", -0.0006238024999999999, 0.002, 0.0005703454276056229, "STOP"], ["No effect · 128 records · hint", "A-s20-N128", -0.0009915722166578527, 0.0015, 0.0031133076412365097, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s21-N128", -0.0012420399999999985, 0.0008, 0.002534187072982752, "STOP"], ["No effect · 128 records · no hint", "A-s21-N128", -0.0019685624999999994, 0.002, 0.0011511309897856718, "STOP"], ["No effect · 128 records · no hint", "A-s20-N128", -0.003085350754671312, 0.001, 0.0016631364368281097, "STOP"], ["No effect · 128 records · hint", "A-s21-N128", -0.003296528124999998, 0.002, 0.0011511309897856718, "STOP"], ["Interaction · 32 records · hint", "B-s22-N32", -0.004996848749999996, 0.004, 0.008779190840996862, "STOP"], ["Interaction · 32 records · no hint", "B-s22-N32", -0.009951460000000006, 0.003, 0.0034826706464954043, "STOP"]];
+const D2 = [{"name": "No hint · 12 states", "rows": [["Always STOP", 0.014443853388567974, false], ["+1 ANALYZE", 0.015069945009101105, false], ["SAMPLE + one window", 0.023805091115069853, false], ["Hindsight minimum", 0.010780600184212941, true], ["Agent’s elicited choice", 0.014610520055234642, false]]}, {"name": "Hint · 12 states", "rows": [["Always STOP", 0.011619634335112511, false], ["+1 ANALYZE", 0.01290551724175825, false], ["SAMPLE + one window", 0.02060617191907358, false], ["Hindsight minimum", 0.00876489742094003, true], ["Agent’s elicited choice", 0.011619634335112511, false]]}];
 function grid(svg, xs, top, bottom, max, step, H, digits) {
   for (let t = 0; t <= max + 1e-9; t += step) {
     el('line', { x1: xs(t), x2: xs(t), y1: top, y2: bottom, stroke: css('--grid'), 'stroke-width': 1 }, svg);
@@ -581,14 +597,14 @@ function grid(svg, xs, top, bottom, max, step, H, digits) {
   }
 }
 function chart1(host) {
-  const W = 780, L = 70, R = 24, T = 14, B = 52, PRICE = 0.012;
+  const W = 780, L = 70, R = 24, T = 14, B = 52, PRICE = 0.014;
   const x0 = -0.012, x1 = 0.05, y0 = 0, y1 = 0.03;
   const pw = W - L - R, k = pw / (x1 - x0), ph = (y1 - y0) * k, H = T + ph + B;
   const X = v => L + (v - x0) * k, Y = v => T + ph - (v - y0) * k;
   const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': "Claude's estimated data gain against the actual gain for 24 moments" });
-  // shaded corner: worth buying, estimate says no
+  // Shaded corner: SAMPLE beats STOP, but its estimated raw gain is below total cost.
   el('rect', { x: X(PRICE), y: Y(PRICE), width: X(x1) - X(PRICE), height: Y(0) - Y(PRICE), fill: css('--back') }, svg);
-  txt(svg, X(x1) - 8, Y(PRICE) + 18, 'worth buying, but its estimate said no', { 'font-size': 12, fill: css('--back-ink'), 'text-anchor': 'end', 'font-weight': 600 });
+  txt(svg, X(x1) - 8, Y(PRICE) + 18, 'beats STOP; estimate below total cost', { 'font-size': 12, fill: css('--back-ink'), 'text-anchor': 'end', 'font-weight': 600 });
   for (let t = -0.01; t <= x1 + 1e-9; t += 0.01) {
     el('line', { x1: X(t), x2: X(t), y1: T, y2: T + ph, stroke: css('--grid') }, svg);
     txt(svg, X(t), T + ph + 18, t.toFixed(2), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'middle', 'font-variant-numeric': 'tabular-nums' });
@@ -601,12 +617,12 @@ function chart1(host) {
   // price lines
   el('line', { x1: X(PRICE), x2: X(PRICE), y1: T, y2: T + ph, stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
   el('line', { x1: L, x2: L + pw, y1: Y(PRICE), y2: Y(PRICE), stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
-  txt(svg, X(PRICE) + 6, T + 12, 'data price', { 'font-size': 11.5, fill: css('--back-ink') });
+  txt(svg, X(PRICE) + 6, T + 12, 'c_a + c_d = 0.014', { 'font-size': 11.5, fill: css('--back-ink') });
   // diagonal
   el('line', { x1: X(0), y1: Y(0), x2: X(y1), y2: Y(y1), stroke: css('--ink-2'), 'stroke-width': 1.2 }, svg);
   txt(svg, X(0.022) - 6, Y(0.022) - 6, 'estimate = actual', { 'font-size': 11.5, fill: css('--ink-2'), 'text-anchor': 'end' });
   // axis titles
-  txt(svg, L + pw / 2, H - 8, 'actual gain from 32 more records', { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
+  txt(svg, L + pw / 2, H - 8, 'realized raw gain: +32 records and one window', { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
   const yt = txt(svg, 16, T + ph / 2, "Claude's estimate", { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
   yt.setAttribute('transform', `rotate(-90 16 ${T + ph / 2})`);
   // points
@@ -614,14 +630,14 @@ function chart1(host) {
     const g = el('g', {}, svg);
     el('circle', { cx: X(act), cy: Y(est), r: 9, fill: 'transparent' }, g);
     el('circle', { cx: X(act), cy: Y(est), r: 5, fill: css('--s1'), stroke: css('--chart'), 'stroke-width': 2 }, g);
-    bindTip(g, [[`actual ${act.toFixed(4)}`, lab, css('--s1')], [`estimate ${est.toFixed(4)}`, `ideal reference ${ideal.toFixed(4)} · chose ${choice.toLowerCase()} at this price`, css('--s1')]]);
+    bindTip(g, [[`actual ${act.toFixed(4)}`, lab, css('--s1')], [`estimate ${est.toFixed(4)}`, `Ref-G (extra prior) ${ideal.toFixed(4)} · chose ${choice.toLowerCase()} at c_d=0.012`, css('--s1')]]);
   });
   host.replaceChildren(svg);
 }
 function chart2(host) {
-  const W = 780, labW = 210, padR = 60, bh = 16, rg = 8, pg = 22, hh = 22, ph = hh + 3 * bh + 2 * rg;
+  const W = 780, labW = 210, padR = 60, bh = 16, rg = 8, pg = 22, hh = 22, ph = hh + D2[0].rows.length * bh + (D2[0].rows.length - 1) * rg;
   const H = 2 * ph + pg + 26, max = 0.025, xs = v => labW + v / max * (W - labW - padR);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Fixed policies against the best per-state choice' });
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Matched-cost policies and elicited agent choices, by prompt condition' });
   grid(svg, xs, hh - 4, H - 24, max, 0.005, H, 3);
   D2.forEach((p, pi) => {
     const y0 = pi * (ph + pg);
@@ -646,9 +662,9 @@ function table(host, head, rows) {
 }
 function draw() {
   chart1(document.querySelector('#c1 .chart'));
-  table(document.querySelector('#c1 .tablewrap'), ['Moment', 'Actual gain', "Claude's estimate", 'Ideal reference', 'Choice at 0.012'], PTS.map(([lab, id, a, e, i, c]) => [`${lab} (${id})`, a.toFixed(4), e.toFixed(4), i.toFixed(4), c.toLowerCase()]));
+  table(document.querySelector('#c1 .tablewrap'), ['State', 'Raw realized gain', 'Raw estimated gain', 'Ref-G (extra prior)', 'Choice at c_d=0.012'], PTS.map(([lab, id, a, e, i, c]) => [`${lab} (${id})`, a.toFixed(4), e.toFixed(4), i.toFixed(4), c.toLowerCase()]));
   chart2(document.querySelector('#c2 .chart'));
-  table(document.querySelector('#c2 .tablewrap'), ['Policy', 'Plenty of data (128)', 'Little data (32)'], D2[0].rows.map((r, i) => [r[0], r[1].toFixed(4), D2[1].rows[i][1].toFixed(4)]));
+  table(document.querySelector('#c2 .tablewrap'), ['Policy', 'No hint · 12 states', 'Hint · 12 states'], D2[0].rows.map((r, i) => [r[0], r[1].toFixed(4), D2[1].rows[i][1].toFixed(4)]));
 }
 document.querySelectorAll('.viewtable').forEach(b => b.addEventListener('click', () => {
   const card = document.getElementById(b.dataset.for), tw = card.querySelector('.tablewrap'), ch = card.querySelector('.chart');

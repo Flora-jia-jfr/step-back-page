@@ -1,0 +1,85 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Which Way Next · Meeting 讲解</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:65px}body{margin:0;background:#faf8f3;color:#252925;font:17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif}a{color:#11665b;text-underline-offset:4px}nav{position:sticky;top:0;z-index:2;background:#faf8f3f2;border-bottom:1px solid #ddd7c9;backdrop-filter:blur(10px);padding:12px max(20px,calc((100vw - 1080px)/2));display:flex;gap:20px;white-space:nowrap;overflow:auto;font-size:14px}main{max-width:1080px;margin:auto;padding:38px 28px 70px}h1{font-size:38px;line-height:1.3;max-width:850px;letter-spacing:-.03em}h2{font-size:27px;line-height:1.4;margin:0 0 20px}h3{font-size:21px;margin:0 0 12px}p{margin:14px 0}section{border-top:1px solid #ded8ca;margin-top:38px;padding-top:30px}code{font:13px/1.6 ui-monospace,SFMono-Regular,monospace;background:#efeade;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:15px;line-height:1.65}th,td{padding:13px 14px;border-bottom:1px solid #ded8ca;text-align:left;vertical-align:top}th{background:#eee9dd;font-weight:600}tbody tr:nth-child(odd) td{background:#f6f3eb}.table-scroll{overflow:auto;margin:22px 0}.status{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}.status div{padding:18px 22px;border-radius:12px;background:#e3eee8}.status div:last-child{background:#f5e7d8}.status small{display:block;text-transform:uppercase;letter-spacing:.05em;font-size:12px;color:#58635e}.status b{display:block;margin-top:5px;font-size:20px}.small{font-size:14px;color:#626860}.demo{background:#edf0e8;padding:24px;border-radius:14px;margin:32px 0}.switches{display:flex;gap:15px;margin:20px 0;flex-wrap:wrap}.switches label{cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 15px;background:white;border-radius:10px}.switches input{width:22px;height:22px;accent-color:#11665b}.demo-result{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:15px}.demo-result small,.demo-result b{display:block}.demo-result b{font-size:22px}.demo-result small{font-size:13px;color:#626860}strong{font-weight:650}.file{overflow-wrap:anywhere}button{font:inherit;background:white;border:1px solid #ddd7c9;border-radius:7px;padding:3px 10px;cursor:pointer}@media(max-width:650px){main{padding:22px 18px 50px}h1{font-size:29px}h2{font-size:23px}.status,.demo-result{grid-template-columns:1fr}table{min-width:650px}nav{padding:10px 18px}.switches{gap:8px}.switches label{padding:8px 10px}}@media print{nav,.switches{display:none}body{font-size:12px;background:white}main{padding:0;max-width:none}h1{font-size:26px}h2{font-size:20px}section{break-inside:avoid}a{color:inherit;text-decoration:none}.demo{break-inside:avoid}table{font-size:11px}}</style></head><body><nav><a href="index.html">English research page</a><a href="#s3">先讲清 setup</a><a href="#s5">一个结果例子</a><a href="#s7">是否合理</a><a href="#s8">下一步</a><a href="#s9">证据位置</a><button onclick="window.print()">打印 / PDF</button></nav><main><p class="small">公开版仅包含讲解与汇总。下列代码和结果文件路径指向本地项目工作区，未随本页公开。</p><h1>Meeting：旧实验测到了什么，后续是否值得继续</h1><div class="status"><div><small>Completed pilot</small><b>Switch-box：3个选择</b>24个存档状态 · 12个底层任务 · 2套提示</div><div><small>Proposed, not run</small><b>Causal toy：4类动作</b>尚未实现；不能用旧结果证明新setup</div></div>
+<p>2026-11-03。网页与源码、已迁入结果表复核；本轮没有运行模型。汇报页：<a href="meeting.html"><code>site/meeting.html</code></a>；英文研究页面：<a href="index.html"><code>site/index.html</code></a>。</p>
+<section id="s1"><h2>可以先这样讲</h2>
+<p>我们想研究agent能否判断下一步研究行动的价值。已经完成的是一个小型预测任务：让agent先提交答案，再从相同状态分别测“继续分析”和“收集更多数据”的效果，并询问它预期能改善多少。结果提示：它对哪些状态会受益于数据有一定区分能力，但几个大收益案例被低估，选择也大多停止。这个结果尚不能证明普遍的研究策略缺陷：任务有先验歧义，预测与实跑的数据分配不一致，分支只重复两次。下一步应先修这些测量问题，并用真实研究轨迹判断值得研究的瓶颈；四类动作的causal环境仍是候选方案。</p>
+</section>
+<section id="s2"><h2>一、页面实际上混着三层内容</h2>
+<div class="table-scroll"><table><tbody>
+<tr><th>层次</th><th>内容</th><th>状态</th></tr>
+<tr><td>研究目标</td><td>对下一步行动的收益预测、选择和执行分别测量</td><td>可以保留的研究问题</td></tr>
+<tr><td>实跑preliminary</td><td>6-switch box；STOP / ANALYZE / SAMPLE</td><td>两组各12个存档状态，已有曲线与询问结果</td></tr>
+<tr><td>新setup</td><td>causal toy，A/R/D/X，多个诊断数据来源、控制器校准</td><td>方案，尚未实现/运行，不能引用旧结果证明它有效</td></tr>
+</tbody></table></div>
+<p>前端在 <a href="index.html"><code>site/index.html</code></a>，不是本地嵌套的独立git checkout。<code>site/publish.sh</code>把页面复制到公开 <code>Flora-jia-jfr/step-back-page</code> repo；本次核对了线上repo的index，除发布时的链接替换外与修订前本地一致。项目原链接指向private <code>Flora-jia-jfr/step-back</code>，外人未必能打开。</p>
+</section>
+<aside class="demo" aria-labelledby="demo-title">
+<h3 id="demo-title">用六个开关理解“观测域”和“测试域”</h3>
+<p>这是教学示意：假设只有 x1 有效，它开时亮灯概率为 70%，关时为 30%。点击开关，看组合落在哪个域。真实概率只由我们这个演示显示，实验中的 agent 看不到。</p>
+<div class="switches"><label><input type="checkbox" id="x1" aria-label="开关 1"><span>x1</span></label><label><input type="checkbox" id="x2" aria-label="开关 2"><span>x2</span></label><label><input type="checkbox" id="x3" aria-label="开关 3"><span>x3</span></label><label><input type="checkbox" id="x4" aria-label="开关 4"><span>x4</span></label><label><input type="checkbox" id="x5" aria-label="开关 5"><span>x5</span></label><label><input type="checkbox" id="x6" aria-label="开关 6"><span>x6</span></label></div>
+<div class="demo-result" aria-live="polite"><div><small>当前组合</small><b id="bits">000000</b></div><div><small>开着的数量 / 所属域</small><b id="parity">0 · 可观测域</b></div><div><small>示例真实概率</small><b id="prob">30%</b></div></div>
+<p class="small">N=32只覆盖偶数域，每个组合按一次；加32条只是再按一次同样的32个组合，仍然看不到奇数域。</p></aside>
+<section id="s3"><h2>二、switch-box到底是什么任务</h2>
+<p>想象6个二元开关，共64种组合。每按一次，灯随机亮或不亮；每个组合有固定但未知的亮灯概率。agent只看到“开关组合＋这次灯是否亮”的记录，要预测每种组合的真实概率。不是预测这一次会不会亮，也不是回答哪个开关最重要。</p>
+<p>真实生成器有4类规则：A没有效应（p=.5）；B只有两开关交互（幅度±.3）；C只有一个开关的主效应（±.2）；D同时有主效应和交互（各±.2）。具体开关、符号随机。agent没有被告知这四个精确规则族或效应幅度。字母A/B/C/D是世界类型，不能与网页后面A/R/D/X行动类别混为一谈。</p>
+<p>数据只来自32种“开着的开关数为偶数”的组合；N=32时每种1条，N=128时每种4条。测试只看从未观测的32种奇数组合。每条观测是0/1，并非真实概率；所以即使每个可见配置都有一条记录，噪声仍然很大。</p>
+<p>agent可用Python做分析，每窗最多4次Python、约8000输出tokens（含reasoning），提交64个概率后窗口结束。评分是隐藏32配置上的概率MSE，越小越好。MSE=.01相当于RMSE为10个百分点；不表示每个配置都差10个百分点。MSE改善.048也不是准确率提高4.8个百分点。</p>
+</section>
+<section id="s4"><h2>三、我们到底做了哪三个实验</h2>
+<div class="table-scroll"><table><tbody>
+<tr><th>实验</th><th>想知道什么</th><th>实际做法与样本</th><th>结果读法</th></tr>
+<tr><td>原提示的曲线</td><td>多想或加数据，实际能改善多少？</td><td>4规则×3seed=12任务；8个N128，4个N32；每状态两条4窗分析链＋两次“加32条balanced数据再分析1窗”</td><td>少数据时，加数据常比继续分析改善更大；反复分析有时变差，且受token截断影响</td></tr>
+<tr><td>加层级提示的曲线</td><td>原结果是否由结构先验歧义造成？</td><td>同12任务，增加“高阶效应较少见”；另有后端截断处理差别</td><td>N128首答到Ref-O的均方距离由约.0067降到.0016，继续分析空间小；不是干净的仅提示因果对照</td></tr>
+<tr><td>收益估计与选择probe</td><td>agent是否预见上述改善？</td><td>24个存档状态×3价格=72个选择probe；另24个原因probe，共96</td><td>能核自报收益与选择、与已跑分支比较；不是72条自主研究轨迹</td></tr>
+</tbody></table></div>
+<p>每个存档包括已见任务/数据、对话、第一次提交答案和工作文件。从存档复制出询问分支和执行分支；询问用的副本丢弃，不把提示带入执行。这是测量的关键优点。实际研究流程先有曲线，再在保存状态上询问；这里不声称询问在时间上先于曲线运行。</p>
+<p>两套提示给24个状态，但底层只有12个任务，不能把24当24独立任务。每项执行只有2次重复，得到的是样本平均收益，不是已知的真实期望收益。两份提示之间还改变了超长回复处理，不能把全部变化归因于层级提示。</p>
+</section>
+<section id="s5"><h2>四、一个数字例子：为什么说可能低估</h2>
+<p>取无层级提示的C-s22、N32。在中间价格c_d=.012的probe中：</p>
+<div class="table-scroll"><table><tbody>
+<tr><th>选择</th><th>agent预期MSE下降</th><th>实际分支平均MSE</th><th>加上成本后的loss</th></tr>
+<tr><td>STOP</td><td>0</td><td>.05717</td><td>.05717</td></tr>
+<tr><td>ANALYZE：再1窗</td><td>.0005</td><td>.05444</td><td>.05644（+.002）</td></tr>
+<tr><td>SAMPLE：加32条＋1窗</td><td>.0040</td><td>.00914</td><td>.02314（+.014）</td></tr>
+</tbody></table></div>
+<p>按自己的估计，两个动作的收益都低于各自成本，选STOP是算术一致的。实际balanced加数据分支的gross gain=.04803，比这次估计.004大约12倍，扣成本后仍改善.03403。但模型估计的是它自选的采样分配，执行是均匀分配；因此这是值得跟进的信号，尚非严格同一个动作的校准误差测量。旧网页4–10倍使用的是三价格平均估计，不能与这里单价格数字混写。</p>
+</section>
+<section id="s6"><h2>五、结果能说到哪里</h2>
+<p>可复核：数据收益AUC约.88（用跨三价格平均估计预测实际gain≥.002；9正例、15负例）。它是同一种data动作跨状态的区分度，不是“88%的收益预测准确”，也不是每个状态内不同动作之间的排序。修订散点图使用c_d=.012单价回答，对应AUC约.84。相同N内也有信号，但样本小且状态配对，未报告可靠泛化区间。</p>
+<p>可复核：72次选择中68 STOP、1 ANALYZE、3 SAMPLE；71/72符合当次自报收益减成本后的最大值；50/72等于实跑分支均值下的事后最好选项。71/72只说明同probe的算术一致，不能证明自报数值是行为的因果驱动。大部分停止也不等于大部分停止错误。</p>
+<p>在c_d=.012、c_a=.002时，24状态里仅2个SAMPLE分支胜过STOP，都是同一C-s22任务在两套提示下；这2次probe都选了STOP。原图按.012而不是.014画线，多算了一个状态。对所有选项的最优比较还要包括ANALYZE，不能只看一条买数据阈值。</p>
+<p>旧“再分析通常值得”的图把分析成本事后改成0，并用4窗分析；原选择probe却问1窗且成本.002。该图可以描述另一个目标下的结果，不能证明原任务的停止决策错误。修订页主图统一为原成本、1窗，并把事后最小loss标为有噪声的hindsight参照。</p>
+</section>
+<section id="s7"><h2>六、setup合理吗</h2>
+<p><strong>作为测量原型，合理。</strong> 真概率已知，评分不用另一个LLM judge；可以复制相同状态、让同agent实际继续；可以分开收益排序、量级和自报选择。应保留这些设计。</p>
+<p><strong>作为广义research metacognition的主证据，目前不够。</strong> 这是有限规则下的概率预测，不含开放提出研究问题、长期路线管理；已经执行的动作主要是继续分析和补同类数据。单次分支改善是可发生的改善，不证明它在当时能被预见。</p>
+<p>最根本的任务问题是even/odd split。用±1表示开关时，even域上六个开关之积总为+1，因此一个低阶项与它互补的高阶项在已见数据上完全一样，却在测试域上相反。即使无限增加even域记录，也无法靠数据消除这个歧义；必须增加结构假设或获得另一类观测。agent指出它不可辨识，可能是正确推理。</p>
+<p>Ref-G知道四个真规则族及幅度，是有额外信息的Bayesian参照。Ref-O不知这四个精确规则，但硬设高阶项为0，并用近似推断；agent得到的只是“高阶较少见”。二者都不能无条件称为与agent同信息、精确的能力上界；尤其不能把到Ref-O的距离直接等同可实现分析收益。</p>
+</section>
+<section id="s8"><h2>七、我建议保留、修改和暂缓什么</h2>
+<p>保留：当前实跑作为preliminary；同状态分支方法；分开估值、选择、执行；同时找出值得继续和应该停止的案例。</p>
+<p>先修测量：预测和执行使用同一具体采样分配；原成本与分析时长统一；恢复完整快照和运行记录；让agent与参照的结构信息明确可比；核token截断及重复波动。若要测结构歧义，应允许真正能够区分它的观测，并分别报告结构先验与决策能力的贡献。不要为制造失败而把已会的任务变难。</p>
+<p>暂缓直接扩大旧toy或实现全部新causal菜单。causal方案方向合理：它试图制造“再拟合不够，需要另一种证据”的状态。但F0–F3的可辨识性、可区分动作、参照和成本尚未校准；现有文案里F0/F2的分配机制不同也可能直接显露标签，不能仅凭故事宣布观测等价。R是review提示，不是天然独立的行为；要看实际代码/模型是否改变。</p>
+<p>新causal方案还必须先明确预测目标：是目标人群在人为施加处理时的均值 E[Y|do(T=t),target]，还是观察到接受处理的人群均值 E[Y|T=t,target]？有混杂时两者不同。“要预测而不是做causal discovery”不能代替这个定义；不同目标决定随机化数据究竟解决什么问题。</p>
+<p>下一阶段两条工作并行：一条修复旧实验的可比较性，检验估值偏差是否仍在；另一条用完整公开研究前缀找到真实瓶颈，再决定新环境应保留哪些困难。只有现象在严格对齐后仍存在，才考虑value calibration或controller。最近邻已覆盖分岔判断、失败恢复和诊断实验，novelty不靠四个动作名字。</p>
+</section>
+<section id="s9"><h2>八、材料在哪里</h2>
+<div class="table-scroll"><table><tbody>
+<tr><th>需要的材料</th><th>本地位置（相对项目根目录）</th></tr>
+<tr><td>直接用于meeting的中文网页</td><td><a href="meeting.html"><code>site/meeting.html</code></a></td></tr>
+<tr><td>修订的英文前端源码</td><td><a href="index.html"><code>site/index.html</code></a></td></tr>
+<tr><td>旧提示曲线结果/解释</td><td><code>runs/claude_curves/summary.md</code>、<code>runs/claude_curves/FINDINGS.md</code></td></tr>
+<tr><td>层级提示曲线结果/解释</td><td><code>runs/claude_curves_hier/summary.md</code>、<code>runs/claude_curves_hier/FINDINGS.md</code></td></tr>
+<tr><td>收益估计、选择的逐状态数表</td><td><code>runs/remedy_check/rows.json</code></td></tr>
+<tr><td>收益估计、选择的报告</td><td><code>runs/remedy_check/summary.md</code>、<code>runs/remedy_check/FINDINGS.md</code></td></tr>
+<tr><td>生成器/训练测试划分/评分</td><td><code>env/rules.py</code>、<code>env/design.py</code>、<code>env/scoring.py</code></td></tr>
+<tr><td>agent实际收到的任务和选择prompt</td><td><code>harness/prompts.py</code></td></tr>
+<tr><td>曲线与询问流程</td><td><code>harness/curves.py</code>、<code>harness/remedy_check.py</code></td></tr>
+<tr><td>新causal设计</td><td><code>proposal.md</code>（方案，未运行）</td></tr>
+<tr><td>本轮重算与页面数据</td><td><code>notes/2026-11-03/meeting-audit/RESULTS_AUDIT.md</code>、<code>notes/2026-11-03/meeting-audit/plot_data.json</code></td></tr>
+</tbody></table></div>
+<p>项目根目录：<code>本地项目工作区</code>。原始transcripts、states工作目录、curves.json和forks.jsonl不在这份本地快照中；根据迁移记录保留在 <code>cs-login:/usr/project/xtmp/fj52/agent_stop_explore_env/runs/</code> 对应目录，本次未重新连接远程核对。<code>rows.json</code>是已处理的逐状态结果，不是原始模型回答。本轮可精确重算汇总指标，不能重新审计每条原回答或恢复所有状态。</p>
+</section>
+<section id="s10"><h2>English speaking version</h2>
+<p>We study whether research agents can estimate the value of their next action. Our completed pilot uses a six-switch probabilistic prediction task. From saved first-answer states, we compare continued analysis with collecting more observations, and separately ask the agent to predict the gains. The pilot suggests some discrimination of where data help, but underestimation in a few high-gain cases. These are preliminary signals: the task has a structural-prior ambiguity, the estimated and executed sampling allocations differ, and each continuation has only two repetitions. The four-action causal environment is a proposal, not a completed experiment. Our next step is to align the measurements and use real research traces to identify a decision bottleneck worth testing.</p>
+</section></main><script>const switches=Array.from(document.querySelectorAll('.switches input'));function update(){const bits=switches.map(x=>x.checked?1:0);const n=bits.reduce((a,b)=>a+b,0);document.getElementById('bits').textContent=bits.join('');document.getElementById('parity').textContent=n+' · '+(n%2?'只用于测试':'可观测域');document.getElementById('prob').textContent=bits[0]?'70%':'30%';}switches.forEach(x=>x.addEventListener('change',update));update();</script></body></html>
