@@ -1,680 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Which way next? Do research agents know what each next step is worth?</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="description" content="Research agents, the judgment behind their next steps, and an exploratory same-state continuation pilot.">
+<meta name="theme-color" content="#faf8f3">
+<title>Which Way Next? — Research question, pilot, and next steps</title>
 <style>
-:root {
-  color-scheme: light;
-  --bg: #faf8f3;
-  --card: #f2eee4;
-  --chart: #fcfcfb;
-  --ink: #1f1d1a;
-  --ink-2: #55524b;
-  --muted: #8b877d;
-  --rule: #e4dfd2;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --keep: #e2eeec;  --keep-ink: #0f5e57;
-  --back: #f6e5da;  --back-ink: #a8441f;
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --fixed: #a8a69e;
-  --sans: "Figtree", "Helvetica Neue", Helvetica, sans-serif;
-  --serif: "Fraunces", Georgia, serif;
-  --mono: "JetBrains Mono", Menlo, Consolas, monospace;
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #141412; --card: #1e1d1a; --chart: #1a1a19;
-  --ink: #efece5; --ink-2: #c4c0b5; --muted: #8b877d;
-  --rule: #302e29; --grid: #2c2c2a; --axis: #383835;
-  --keep: #12302d; --keep-ink: #6cc3b8;
-  --back: #3a2318; --back-ink: #ec9a74;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --fixed: #6b6a64;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; scroll-padding-top: 70px; }
-body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.65; -webkit-font-smoothing: antialiased; counter-reset: sec; }
-a { color: inherit; text-decoration-color: var(--axis); text-underline-offset: 3px; }
-a:hover { text-decoration-color: var(--back-ink); }
-.skip { position: absolute; left: -999px; } .skip:focus { left: 12px; top: 12px; z-index: 20; background: var(--bg); padding: 6px 10px; }
-
-/* nav */
-nav.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); }
-nav.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--rule); }
-nav.top .in { max-width: 960px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; gap: 24px; font-size: 14px; }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; font-family: var(--serif); font-weight: 600; font-size: 17px; letter-spacing: -.01em; }
-.brand svg { display: block; }
-.brand small { font-family: var(--mono); font-weight: 400; font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
-nav.top a.l { text-decoration: none; color: var(--ink-2); position: relative; }
-nav.top a.l:hover { color: var(--ink); }
-nav.top a.l:hover::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 2px; background: var(--back-ink); border-radius: 2px; }
-#theme { background: none; border: 1px solid var(--rule); color: var(--ink-2); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 12px; }
-
-main { max-width: 960px; margin: 0 auto; padding: 0 28px; }
-section { padding: 64px 0 60px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 150px minmax(0, 1fr); column-gap: 36px; }
-section > * { grid-column: 2; }
-section > h2 { grid-column: 1 / -1; display: grid; grid-template-columns: 150px 1fr; column-gap: 36px; align-items: baseline; }
-section > h2::before { counter-increment: sec; content: counter(sec, decimal-leading-zero); font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--back-ink); letter-spacing: .04em; }
-
-/* hero */
-.hero { padding: 70px 0 64px; }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 44px; align-items: center; }
-.meta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .03em; margin-bottom: 18px; }
-.hero h1 { font-family: var(--serif); font-weight: 600; font-size: 50px; line-height: 1.07; letter-spacing: -.02em; margin-bottom: 20px; }
-.hero h1 em { font-style: normal; color: var(--back-ink); }
-.hero .kick { font-family: var(--serif); font-size: 25px; line-height: 1.35; margin: -6px 0 18px; color: var(--ink); }
-.hero .sub { font-size: 18.5px; line-height: 1.6; color: var(--ink-2); }
-.forkfig { background: var(--card); border-radius: 14px; padding: 18px 16px 12px; }
-.forkfig figcaption { font-size: 12.5px; color: var(--muted); margin-top: 6px; text-align: center; }
-.rqs { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 42px; }
-.rqs li { border-top: 2px solid var(--ink); padding-top: 12px; font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
-.rqs li b { display: block; font-family: var(--serif); font-weight: 600; font-size: 19px; color: var(--ink); margin-bottom: 4px; line-height: 1.3; }
-.rqs .q { font-family: var(--mono); font-size: 11.5px; color: var(--back-ink); letter-spacing: .06em; }
-.links { display: flex; gap: 18px; margin-top: 34px; font-size: 14.5px; flex-wrap: wrap; align-items: center; }
-.links a { text-decoration: none; color: var(--ink); font-weight: 500; border-bottom: 1.5px solid var(--back-ink); padding-bottom: 1px; }
-.links a::after { content: " →"; color: var(--back-ink); }
-.links .tgt { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
-
-h2 { font-family: var(--serif); font-weight: 600; font-size: 30px; letter-spacing: -.015em; line-height: 1.2; margin-bottom: 18px; }
-h3 { font-family: var(--serif); font-weight: 600; font-size: 20px; letter-spacing: -.005em; margin: 34px 0 8px; }
-p + p { margin-top: 14px; }
-.lede { color: var(--ink-2); font-size: 18.5px; margin-bottom: 22px; }
-b, strong { font-weight: 600; }
-code, .mono { font-family: var(--mono); font-size: .84em; background: var(--card); border-radius: 4px; padding: 1px 5px; }
-
-/* figures */
-figure { margin: 24px 0 8px; }
-figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; line-height: 1.5; }
-figcaption b { color: var(--ink); font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .03em; margin-right: 4px; }
-.box { background: var(--card); border-radius: 12px; padding: 16px 18px; }
-.box .lbl, .chainbox .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-
-/* 2x2 */
-.quad { display: grid; grid-template-columns: 88px 1fr 1fr; gap: 10px; }
-.quad .h { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 2px 2px; }
-.quad .h.k { color: var(--keep-ink); } .quad .h.b { color: var(--back-ink); }
-.quad .r { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; }
-.qc { border-radius: 12px; padding: 14px 16px; border: 1px solid transparent; }
-.qc.k { background: var(--keep); } .qc.b { background: var(--back); }
-.qc .t { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 10px; }
-.qc .t span { font-family: var(--serif); font-size: 22px; font-weight: 600; line-height: 1; }
-.qc.k .t span { color: var(--keep-ink); } .qc.b .t span { color: var(--back-ink); }
-.qc .d { font-size: 14px; color: var(--ink-2); margin-top: 4px; line-height: 1.45; }
-.stop { font-size: 14px; color: var(--ink-2); margin-top: 10px; padding-left: 98px; }
-
-details > summary { cursor: pointer; color: var(--back-ink); padding: 10px 0; }
-details[open] > summary { margin-bottom: 14px; }
-/* tables */
-table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; }
-table.t th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; border-bottom: 1.5px solid var(--ink); }
-table.t td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
-table.t td.n { font-weight: 600; white-space: nowrap; }
-table.t td .g, table.t td.g, .g { color: var(--ink-2); }
-.y { font-weight: 600; color: var(--keep-ink); } .no { color: var(--muted); }
-td.us, th.us { background: var(--back); padding-left: 10px !important; }
-th.us { color: var(--back-ink) !important; }
-
-/* two cards */
-.tscroll { overflow-x: auto; }
-.tscroll table.t { min-width: 620px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 22px; }
-.two .box ul { list-style: none; font-size: 14.5px; line-height: 1.5; }
-.two .box li { margin-top: 8px; padding-left: 14px; position: relative; }
-.two .box li::before { content: ""; position: absolute; left: 0; top: .68em; width: 6px; height: 6px; border-radius: 50%; background: var(--axis); }
-.two .box.b { background: var(--back); }
-.two .box.b li::before { background: var(--back-ink); }
-.two .box .cite { color: var(--muted); }
-
-.box ul.steps { list-style: none; margin-top: 4px; }
-.box ul.steps li { font-size: 15.5px; line-height: 1.55; margin-top: 8px; }
-.box .small { font-size: 13px; color: var(--muted); margin-top: 10px; }
-.chainbox ul.steps { list-style: none; margin-top: 10px; }
-.chainbox ul.steps li { font-size: 14.5px; line-height: 1.5; margin-top: 4px; padding-left: 14px; position: relative; color: var(--ink-2); }
-.chainbox ul.steps li::before { content: ""; position: absolute; left: 0; top: .68em; width: 6px; height: 6px; border-radius: 50%; background: var(--axis); }
-.two .box li.cite::before { display: none; }
-.two .box li.cite { padding-left: 0; font-size: 13px; }
-/* callout */
-.callout { border-left: 3px solid var(--back-ink); background: var(--back); border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 22px 0; font-size: 16px; }
-.callout .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--back-ink); margin-bottom: 4px; }
-blockquote { font-family: var(--serif); font-size: 18px; line-height: 1.45; }
-
-/* stats */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
-.stat { border-top: 2px solid var(--ink); padding-top: 10px; }
-.stat .v { font-family: var(--serif); font-size: 34px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
-.stat .v small { font-size: 17px; color: var(--muted); font-weight: 500; }
-.stat .k { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
-
-/* charts */
-.chart-card { background: var(--chart); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px 10px; position: relative; }
-.chart-card .ct { font-weight: 600; font-size: 14.5px; }
-.chart-card .cs { font-size: 12.5px; color: var(--muted); }
-.legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); margin: 8px 0 2px; flex-wrap: wrap; }
-.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
-.viewtable { position: absolute; right: 12px; top: 12px; font: 500 11px/1 var(--mono); color: var(--muted); background: none; border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px; cursor: pointer; }
-.viewtable:hover { color: var(--ink); }
-table.dt { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0 6px; }
-table.dt th, table.dt td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
-table.dt th { color: var(--muted); font-weight: 500; }
-.hidden { display: none; }
-svg text { font-family: var(--sans); }
-.mark:hover, .mark:focus { filter: brightness(1.08); outline: none; }
-#tip { position: fixed; pointer-events: none; background: var(--chart); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 10px; font: 12.5px/1.35 var(--sans); color: var(--ink-2); box-shadow: 0 4px 14px rgba(0,0,0,.08); opacity: 0; transition: opacity .1s; z-index: 30; }
-#tip .v { font-weight: 600; font-size: 15px; color: var(--ink); }
-#tip .key { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 6px; }
-
-/* RQ tag in tables */
-.pill { font-family: var(--mono); font-size: 11.5px; color: var(--back-ink); letter-spacing: .06em; }
-
-/* step chain */
-.chain { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13.5px; }
-.chip { border: 1px solid var(--rule); background: var(--bg); border-radius: 8px; padding: 5px 11px; }
-.chip i { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-right: 6px; }
-.chip.dark { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.chip.k { background: var(--keep); border-color: transparent; color: var(--keep-ink); font-weight: 600; }
-.chip.b { background: var(--back); border-color: transparent; color: var(--back-ink); font-weight: 600; }
-.arrow { color: var(--muted); font-size: 12px; }
-.chainbox { background: var(--card); border-radius: 12px; padding: 14px 16px; margin-top: 10px; }
-
-/* timeline */
-.tl { font-size: 15px; }
-.tl .row { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--rule); position: relative; }
-.tl .w { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
-.tl .now .w { color: var(--back-ink); font-weight: 500; }
-.tl .now::before { content: ""; position: absolute; left: -16px; top: 18px; width: 7px; height: 7px; border-radius: 50%; background: var(--back-ink); }
-.gate { display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 11px; background: var(--back); color: var(--back-ink); border-radius: 6px; padding: 2px 8px; }
-
-footer { max-width: 960px; margin: 0 auto; padding: 24px 28px 48px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); }
-
-@media (max-width: 820px) {
-  section { grid-template-columns: minmax(0, 1fr); } section > *, section > h2 { grid-column: 1; }
-  section > h2 { grid-template-columns: 1fr; } section > h2::before { margin-bottom: 4px; }
-  .hero-grid, .rqs, .two, .stats { grid-template-columns: 1fr; }
-  .hero h1 { font-size: 38px; } .quad { grid-template-columns: 64px 1fr 1fr; } .stop { padding-left: 0; }
-  nav.top a.l { display: none; }
-}
+:root{color-scheme:light;--paper:#faf8f3;--card:#f1ede3;--white:#fffefa;--ink:#252620;--secondary:#56594f;--muted:#696d61;--line:#d9d8cc;--teal:#17675f;--tealwash:#e4eeea;--rust:#a64c2d;--rustwash:#f4e6da;--sans:"Helvetica Neue",Arial,sans-serif;--serif:Georgia,"Times New Roman",serif;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.65 var(--sans);-webkit-font-smoothing:antialiased}a{color:var(--teal);text-underline-offset:4px}a:hover{color:var(--rust)}button,select{font:inherit;color:inherit}button,summary,select{cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--rust);outline-offset:4px}button{border:1px solid var(--line);border-radius:8px;background:var(--white);padding:9px 14px}p{margin:0 0 18px}strong{font-weight:650}h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.025em}h1{font-size:clamp(43px,5.3vw,66px);line-height:1.09;margin:18px 0 27px;max-width:940px}h1 em{color:var(--rust)}h2{font-size:clamp(31px,3.4vw,41px);line-height:1.2;margin:0 0 23px}h3{font-size:25px;line-height:1.3;margin:0 0 13px}.eyebrow{font:13px/1.45 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--rust)}.label{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary)}.secondary{color:var(--secondary)}.small{font-size:16px;line-height:1.6;color:var(--secondary)}.mono{font-family:var(--mono);font-size:.88em;font-variant-numeric:tabular-nums}.skip{position:absolute;left:-9999px}.skip:focus{left:16px;top:16px;background:var(--white);padding:10px;z-index:30}nav{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:rgba(250,248,243,.97);backdrop-filter:blur(10px)}.nav-inner{max-width:1152px;margin:auto;padding:14px 30px;display:flex;gap:25px;align-items:center}.brand{font:23px var(--serif);color:var(--ink);text-decoration:none;white-space:nowrap;margin-right:auto}.nav-links{display:flex;gap:22px;font-size:15px}.nav-links a{text-decoration:none;color:var(--secondary)}.print-button{font-size:14px;padding:7px 11px;white-space:nowrap}main{max-width:1152px;margin:auto;padding:0 30px}.hero{padding:64px 0 49px}.hero .intro{max-width:910px;font-size:21px;line-height:1.65}.hero .intro strong{font-weight:500;color:var(--teal)}.status-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:32px}.status{border:1px solid var(--line);padding:21px 25px;border-radius:12px;background:var(--card)}.status.completed{background:var(--tealwash);border-color:#cfdfd7}.status b{display:block;font-size:19px;margin-top:5px}.status p{margin:8px 0 0;font-size:17px}.section{display:grid;grid-template-columns:137px minmax(0,1fr);gap:30px;border-top:1px solid var(--line);padding:56px 0}.section-number{font:14px/1.4 var(--mono);color:var(--rust);padding-top:7px;letter-spacing:.04em}.section-number span{display:block;color:var(--muted);font:14px/1.45 var(--sans);letter-spacing:0;margin-top:9px}.section-body{min-width:0}.lead{font-size:20px}.callout{background:var(--rustwash);border-left:3px solid var(--rust);padding:20px 24px;margin:25px 0;border-radius:0 10px 10px 0}.callout p:last-child{margin-bottom:0}.callout.teal{background:var(--tealwash);border-color:var(--teal)}.two{display:grid;grid-template-columns:1fr 1fr;gap:23px;margin:25px 0}.mini-card{border-top:2px solid var(--teal);padding-top:16px}.mini-card h3{font-size:23px}.mini-card p{font-size:17px}.table-scroll{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:10px;margin:23px 0;background:var(--white)}table{border-collapse:collapse;width:100%;font-size:16px;line-height:1.5}th,td{text-align:left;padding:15px 17px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:14px;font-weight:600;color:var(--secondary);background:var(--card)}tbody tr:last-child td{border-bottom:0}td:first-child{font-weight:550}.inventory{min-width:670px}.inventory th:first-child{width:24%}.inventory th:nth-child(2){width:36%}.data-table{min-width:750px;font-variant-numeric:tabular-nums}.data-table th,.data-table td{padding:10px 13px;font-size:14px}.data-table td:first-child{font-family:var(--mono);font-size:12px}caption{text-align:left;padding:12px 13px;font-size:14px;color:var(--secondary)}details{margin:18px 0}summary{color:var(--teal);font-size:16px;padding:8px 0}details[open] summary{margin-bottom:10px}.demo{background:var(--card);border-radius:15px;padding:27px;margin:28px 0}.demo-top{display:flex;align-items:baseline;justify-content:space-between;gap:15px;flex-wrap:wrap}.demo-top h3{margin:0}.demo-note{color:var(--rust);font:12px var(--mono);text-transform:uppercase;letter-spacing:.04em}.switches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:25px 0}.switch{padding:12px 8px;border-radius:10px;display:flex;align-items:center;flex-direction:column;gap:9px;background:var(--white);border:1px solid #cacbbf}.switch span:first-child{font:15px var(--mono)}.track{width:45px;height:25px;background:#d5d6cd;border-radius:20px;padding:4px;display:block}.knob{display:block;width:17px;height:17px;background:#fff;box-shadow:0 1px 3px #0002;border-radius:50%;transition:transform .15s}.switch[aria-checked=true]{border-color:var(--teal);color:var(--teal)}.switch[aria-checked=true] .track{background:var(--teal)}.switch[aria-checked=true] .knob{transform:translateX(20px)}.demo-bottom{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}.demo-grid{display:block;width:100%;max-width:260px;margin:auto}.demo-results{display:grid;gap:12px}.demo-results .value{font:26px/1.3 var(--serif);display:block}.demo-results .caption{font-size:14px;color:var(--secondary)}.domain{display:inline-block;font-size:14px;padding:4px 10px;border-radius:5px;background:var(--tealwash);color:var(--teal)}.domain.heldout{background:var(--rustwash);color:var(--rust)}.demo .small{margin:18px 0 0}.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:var(--secondary);margin:13px 0}.legend span{display:flex;align-items:center;gap:7px}.swatch{width:11px;height:11px;display:inline-block;background:var(--teal);border-radius:50%}.swatch.rust{background:var(--rust)}.swatch.open{background:transparent;border:2px solid var(--rust)}.flow-intro{display:flex;align-items:center;gap:14px;justify-content:center;margin:26px 0 18px}.flow-step{border:1px solid var(--line);border-radius:9px;padding:12px 20px;background:var(--white);text-align:center}.flow-step.saved{background:var(--ink);color:var(--paper)}.flow-step small{display:block;font-size:13px;color:var(--secondary)}.flow-step.saved small{color:#d2d4c9}.flow-arrow{color:var(--rust);font-size:24px}.fork-grid{display:grid;grid-template-columns:1fr 1.65fr;gap:18px;margin:18px 0}.fork-panel{border:1px solid var(--line);border-radius:11px;padding:21px;background:var(--white)}.fork-panel h3{font:600 17px var(--sans);letter-spacing:0}.fork-panel p{font-size:16px}.fork-panel p:last-child{margin-bottom:0}.action-row{display:grid;grid-template-columns:95px 1fr;gap:12px;font-size:16px;border-top:1px solid var(--line);padding:12px 0}.action-row:last-child{padding-bottom:0}.action-name{font:600 13px var(--mono);padding-top:4px;color:var(--teal)}.action-row small{display:block;color:var(--secondary);font-size:14px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:26px 0}.metric{border-top:2px solid var(--ink);padding-top:14px}.number{font:37px/1.1 var(--serif)}.metric p{font-size:16px;line-height:1.5;margin:9px 0 0}.control-bar{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;border:1px solid var(--line);padding:17px 19px;border-radius:11px;background:var(--card);margin:28px 0 18px}.control-bar label{display:block;font-size:14px;color:var(--secondary)}select{display:block;min-height:43px;margin-top:6px;padding:7px 32px 7px 11px;border:1px solid #bfc2b6;border-radius:6px;background:var(--white);font-size:16px}.control-explainer{font-size:14px;max-width:210px;color:var(--secondary);margin:0 0 3px}.chart-card{background:var(--white);border:1px solid var(--line);border-radius:13px;padding:23px;margin:22px 0}.chart-card h3{font-size:25px}.chart-subtitle{font-size:15px;color:var(--secondary);margin:5px 0 12px}.chart-svg{display:block;width:100%;height:auto;overflow:visible}.chart-svg text{font-family:var(--sans);font-size:14px;fill:var(--secondary)}.chart-svg .axis-title{font-size:15px;fill:var(--ink)}.chart-svg .tick{font-size:13px}.plot-point{cursor:pointer}.plot-point:focus{outline:none;stroke:var(--ink);stroke-width:3}.chart-caption{font-size:15px;line-height:1.6;color:var(--secondary);margin:12px 0 0}.readout{font-size:16px;border-top:1px solid var(--line);padding-top:14px;margin-top:15px;color:var(--secondary)}.readout strong{color:var(--ink)}.selected-point{font-size:14px;color:var(--secondary);min-height:45px;background:var(--paper);padding:10px 13px;border-radius:6px;margin:9px 0}.example{background:var(--tealwash);border-radius:12px;padding:25px;margin:26px 0}.example-values{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;margin:21px 0}.example-values strong{font:35px var(--serif);display:block}.example-values span{font-size:14px;color:var(--secondary)}.example p:last-child{margin-bottom:0}.limitations{display:grid;grid-template-columns:1fr 1fr;gap:25px 28px;margin-top:25px}.limitation{border-top:1px solid var(--line);padding-top:17px}.limitation h3{font-size:23px}.limitation p{font-size:17px}.question{font:29px/1.4 var(--serif);color:var(--teal);margin:22px 0}.next-list{list-style:none;margin:25px 0;padding:0;counter-reset:next}.next-list li{display:grid;grid-template-columns:33px 1fr;gap:15px;border-top:1px solid var(--line);padding:19px 0}.next-list li:before{counter-increment:next;content:counter(next);font:23px var(--serif);color:var(--rust)}.next-list p{margin:5px 0 0;font-size:17px;color:var(--secondary)}.references{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;margin-top:25px}.reference{padding-top:12px;border-top:1px solid var(--line);font-size:16px}.reference small{display:block;color:var(--secondary);margin-top:4px;font-size:14px}footer{border-top:1px solid var(--line);padding:28px 0 45px;font-size:14px;color:var(--secondary);display:flex;justify-content:space-between;gap:20px}footer p{margin:0}#tooltip{position:fixed;z-index:50;max-width:300px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--ink);color:var(--paper);font:14px/1.5 var(--sans);box-shadow:0 6px 20px #0002;pointer-events:none}#tooltip[hidden]{display:none}
+@media(max-width:850px){.nav-inner{gap:15px}.nav-links{gap:14px}.section{grid-template-columns:65px 1fr;gap:22px}.section-number span{display:none}.fork-grid{grid-template-columns:1fr}.flow-intro{justify-content:flex-start}.chart-card{padding:18px}.control-explainer{max-width:none}}
+@media(max-width:620px){body{font-size:17px}.nav-inner{padding:12px 18px;flex-wrap:wrap;gap:9px}.brand{font-size:21px}.nav-links{order:3;width:100%;justify-content:space-between;font-size:14px}.print-button{font-size:12px}main{padding:0 20px}.hero{padding:40px 0}.hero .intro{font-size:19px}.status-row,.two,.limitations,.references{grid-template-columns:1fr}.status{padding:18px 20px}.section{display:block;padding:37px 0}.section-number{margin-bottom:13px}.section-number span{display:inline;margin-left:10px}.demo{padding:19px}.demo-bottom{grid-template-columns:1fr}.switches{gap:6px}.switch{padding:10px 4px}.track{width:39px;height:23px;padding:3px}.switch[aria-checked=true] .knob{transform:translateX(16px)}.metrics{gap:12px}.number{font-size:31px}.metric p{font-size:14px}.chart-card{padding:16px 12px}.chart-card h3{font-size:24px}.control-bar{gap:12px;flex-direction:column;align-items:stretch}.control-bar label{width:100%}select{width:100%;min-width:125px}.control-explainer{font-size:13px}.example{padding:20px}.example-values{gap:10px}.example-values strong{font-size:30px}.flow-step{padding:10px 13px}.flow-arrow{font-size:20px}footer{display:block}footer p+p{margin-top:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{body{background:white;color:#111;font-size:11pt;line-height:1.5}nav,.skip,.print-button,.control-bar,summary,#tooltip{display:none!important}main{max-width:none;padding:0}.hero{padding:15px 0 22px}h1{font-size:33pt}h2{font-size:24pt}h3{font-size:17pt}.hero .intro,.lead{font-size:12pt}.section{display:block;padding:24px 0;break-inside:auto}.section-number{margin-bottom:8px}.section-number span{display:inline;margin-left:10px}.status,.demo,.fork-panel,.example,.chart-card,.limitation,.reference{break-inside:avoid}.chart-card{padding:14px}.chart-caption,.small{font-size:10pt}.chart-svg{max-height:310px}.table-scroll{overflow:visible}.inventory{min-width:0}table{font-size:10pt}th,td{padding:8px}details:not([open])>*:not(summary){display:none!important}details[open] summary{display:block!important}.data-table{min-width:0}.data-table th,.data-table td{font-size:8pt;padding:4px}.metrics{margin:15px 0}.metric p{font-size:10pt}.limitations,.references{grid-template-columns:1fr 1fr}.limitation p,.next-list p{font-size:11pt}.question{font-size:19pt}.reference{font-size:10pt}.reference small,footer{font-size:9pt}a{color:inherit;text-decoration:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<nav class="top"><div class="in">
-  <a class="brand" href="#top"><svg width="22" height="18" viewBox="0 0 22 18" aria-hidden="true"><circle cx="4" cy="9" r="3.2" fill="currentColor"/><path d="M7 9 L19 2.5 M7 9 H19 M7 9 L19 15.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="19" cy="2.5" r="1.8" fill="var(--keep-ink)"/><circle cx="19" cy="9" r="1.8" fill="var(--axis)"/><circle cx="19" cy="15.5" r="1.8" fill="var(--back-ink)"/></svg>Which way next</a>
-  <a class="l" href="#motivation">Motivation</a>
-  <a class="l" href="#preliminary">Preliminary results</a>
-  <a class="l" href="#questions">Questions</a>
-  <a class="l" href="#setup">Proposed setup</a>
-  <a class="l" href="meeting.html">中文讲解</a>
-  <button id="theme" aria-label="Toggle dark theme">◐</button>
-</div></nav>
-
+<nav aria-label="Main navigation"><div class="nav-inner"><a class="brand" href="#main">Which Way Next?</a><div class="nav-links"><a href="#question">Question</a><a href="#setup">Setup</a><a href="#results">Results</a><a href="#limits">Limits</a><a href="#next">Next steps</a></div><button class="print-button" id="print-page" type="button">Print / Save PDF</button></div></nav>
 <main id="main">
-<header class="hero" id="top">
-  <div class="callout" style="margin:0 0 30px" role="note">
-    <div class="lbl">Status · audited 3 November 2026</div>
-    <p><b>Completed:</b> the earlier switch-box pilot, with three choices: STOP, ANALYZE, SAMPLE. <b>Proposed, not implemented or run:</b> the causal toy and its four candidate action categories. These categories are a design hypothesis, not a validated ontology.</p>
-    <p><a href="meeting.html"><b>中文 meeting 讲解 →</b></a> &nbsp; <a href="#preliminary">Go to completed pilot evidence →</a></p>
-  </div>
-  <div class="hero-grid">
-    <div>
-      <h1>Which way <em>next</em>?</h1>
-      <p class="kick">Do research agents know what each next step is worth?</p>
-      <p class="sub">We study whether research agents can judge which next step is worth taking. An earlier switch-box pilot compared estimated gains with executed continuations for STOP, ANALYZE and SAMPLE. It suggests a gap between ranking and gain magnitude in this small setting. A broader causal setup and four action categories below remain proposals; their implementation, evaluation and novelty are unresolved.</p>
-    </div>
-    <figure class="forkfig">
-      <svg viewBox="0 0 340 220" width="100%" role="img" aria-label="From one saved state, every next move is run">
-        <g font-family="var(--sans)" font-size="12.5">
-          <path d="M70 110 C 140 110, 150 22, 210 22" stroke="var(--axis)" stroke-width="2" fill="none"/>
-          <path d="M70 110 C 140 110, 150 66, 210 66" stroke="var(--keep-ink)" stroke-width="2" fill="none"/>
-          <path d="M70 110 C 140 110, 150 110, 210 110" stroke="var(--back-ink)" stroke-width="2" fill="none"/>
-          <path d="M70 110 C 140 110, 150 154, 210 154" stroke="var(--keep-ink)" stroke-width="2" fill="none"/>
-          <path d="M70 110 C 140 110, 150 198, 210 198" stroke="var(--back-ink)" stroke-width="2" fill="none"/>
-          <circle cx="58" cy="110" r="13" fill="var(--ink)"/>
-          <text x="58" y="141" text-anchor="middle" fill="var(--ink-2)" font-size="11.5">saved state</text>
-          <g font-weight="600">
-            <circle cx="214" cy="22" r="4.5" fill="var(--axis)"/><text x="226" y="26" fill="var(--ink)">STOP</text>
-            <circle cx="214" cy="66" r="4.5" fill="var(--keep-ink)"/><text x="226" y="70" fill="var(--ink)">A <tspan font-weight="400" fill="var(--ink-2)">analyze more</tspan></text>
-            <circle cx="214" cy="110" r="4.5" fill="var(--back-ink)"/><text x="226" y="114" fill="var(--ink)">R <tspan font-weight="400" fill="var(--ink-2)">rethink</tspan></text>
-            <circle cx="214" cy="154" r="4.5" fill="var(--keep-ink)"/><text x="226" y="158" fill="var(--ink)">D <tspan font-weight="400" fill="var(--ink-2)">same data</tspan></text>
-            <circle cx="214" cy="198" r="4.5" fill="var(--back-ink)"/><text x="226" y="202" fill="var(--ink)">X <tspan font-weight="400" fill="var(--ink-2)">diagnostic</tspan></text>
-          </g>
-        </g>
-      </svg>
-      <figcaption>Proposed extension: compare candidate continuations from one saved state. The completed pilot below used only STOP, ANALYZE and SAMPLE.</figcaption>
-    </figure>
-  </div>
-  <ol class="rqs">
-    <li><span class="q">Q1</span><b>Do its estimates match the real gains?</b>Which step helps more, and by how much, relative to the price; too low or too high.</li>
-    <li><span class="q">Q2</span><b>Where does the call break?</b>In the estimate, in the choice, or in carrying the step out.</li>
-    <li><span class="q">Q3</span><b>Is there room for judgment?</b>Or do simple fixed policies already come close? Reported either way.</li>
-    <li><span class="q">Q4</span><b>Can it be repaired?</b>If it ranks well but misjudges size, does value calibration fix the choice?</li>
-  </ol>
-</header>
+<header class="hero" id="question"><div class="eyebrow">Research discussion · November 3, 2026</div><h1>When should a research agent<br><em>reconsider its approach?</em></h1><p class="intro">We want to understand whether AI research agents can recognize what is limiting progress, evaluate alternative ways forward, and allocate effort accordingly. <strong>Strong execution does not guarantee that the agent is working on the right problem.</strong></p><p class="secondary">Changing direction is not automatically better than persisting. The question is whether the agent can tell which response the evidence supports.</p><div class="status-row"><div class="status completed"><div class="label">Completed</div><b>A small measurement prototype</b><p>Compare reported action values with continuations from the same saved state. The pilot provides exploratory signals and exposes measurement problems.</p></div><div class="status"><div class="label">Current research task</div><b>Find a concrete decision bottleneck</b><p>Ground the question in complete research episodes before expanding the synthetic environment. No general strategic failure has been established.</p></div></div></header>
 
-<!-- ============ the decision ============ -->
-<section id="decision">
-  <h2>Proposed vocabulary: four kinds of next step</h2>
-  <p class="lede">This unvalidated grouping is a proposal for discussing open-ended actions, not a result from the completed pilot. We ask two questions: does the information come from the data at hand or from new data, and is the step meant to refine the current explanation or to test whether it is right?</p>
-  <details><summary><b>Expand proposed design (not run)</b></summary>
+<section class="section" id="setup" aria-labelledby="setup-title"><div class="section-number">01<span>The completed task</span></div><div class="section-body"><h2 id="setup-title">A simple task with a useful complication</h2><p class="lead">Six binary switches control a lamp. The agent observes noisy on/off outcomes and predicts the lamp’s probability of lighting at configurations it has never observed.</p><div class="two"><div class="mini-card"><h3>What the agent sees</h3><p>32 or 128 observations, drawn from the 32 configurations with an <strong>even</strong> number of switches on. It has a Python tool for analysis.</p></div><div class="mini-card"><h3>What we score</h3><p>Predicted probabilities at the other 32 configurations, with an <strong>odd</strong> number on. Loss is mean squared error (MSE) against the generating probabilities.</p></div></div><p>The hidden rule has no effect, one main effect, a two-switch interaction, or both. The agent is not given this list of candidate rules. An MSE of 0.01 corresponds to a root-mean-square probability error of 10 percentage points.</p>
+<div class="demo" aria-labelledby="demo-title"><div class="demo-top"><h3 id="demo-title">Explore the observation split</h3><span class="demo-note">Illustration · not an experimental output</span></div><p class="small">For this teaching example only, switch 1 sets the lamp probability: 70% when on, 30% when off. Toggle any switch to see whether the configuration belongs to the observed or held-out half.</p><div class="switches" role="group" aria-label="Six illustrative switches">
+<button class="switch" type="button" role="switch" aria-checked="true" aria-label="Switch 1"><span>1</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Switch 2"><span>2</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button><button class="switch" type="button" role="switch" aria-checked="true" aria-label="Switch 3"><span>3</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Switch 4"><span>4</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Switch 5"><span>5</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Switch 6"><span>6</span><span class="track" aria-hidden="true"><span class="knob"></span></span></button></div>
+<div class="demo-bottom"><div><svg class="demo-grid" id="configuration-grid" viewBox="0 0 272 272" role="img" aria-label="The 64 configurations: 32 observed and 32 held out. The selected configuration is outlined."></svg><div class="legend"><span><i class="swatch" aria-hidden="true"></i>Observed: 32</span><span><i class="swatch open" aria-hidden="true"></i>Held out: 32</span></div></div><div class="demo-results" aria-live="polite" aria-atomic="true"><div><span class="caption">Configuration · switches 1 to 6</span><strong class="value mono" id="demo-bits">101000</strong></div><div><span class="caption" id="demo-count">2 switches on</span><div><span class="domain" id="demo-domain">Observed half · even</span></div></div><div><span class="caption">Illustrative generating probability</span><strong class="value" id="demo-probability">70%</strong></div></div></div><p class="small">At N = 32, each observed configuration is sampled once. The extra balanced batch samples each of those same configurations once more. It does not reveal any held-out configuration.</p></div>
+<details><summary>Why the split creates an ambiguity</summary><p class="small">A low-order rule and its complementary high-order rule can agree on every even configuration and disagree on every odd one. More even observations reduce sampling noise but cannot distinguish these rules. Predicting the odd half therefore requires a structural assumption. This matters when interpreting “more analysis” as progress.</p></details></div></section>
 
-  <figure>
-    <div class="quad">
-      <div></div><div class="h k">refine the current explanation</div><div class="h b">question the current explanation</div>
-      <div class="r">data at hand</div>
-      <div class="qc k"><div class="t"><span>A</span>Analyze more</div><div class="d">refit, tune, check the fit</div></div>
-      <div class="qc b"><div class="t"><span>R</span>Rethink the explanation</div><div class="d">test the assumptions; look in the data at hand for other explanations</div></div>
-      <div class="r">new data</div>
-      <div class="qc k"><div class="t"><span>D</span>More of the same data</div><div class="d">more records of the kind already collected, to reduce noise</div></div>
-      <div class="qc b"><div class="t"><span>X</span>Diagnostic experiment</div><div class="d">new data that can tell the current explanation from an alternative</div></div>
-    </div>
-    <div class="stop">… or stop.</div>
-    <figcaption><b>Figure 1.</b> Proposed categories, not separately tested actions in the completed pilot. Each answers a different shortfall: the analysis is not finished (A), the explanation may be wrong (R), there is too little data (D), or the data cannot separate the explanations (X). In this proposal, analysis would use a shared finite budget; the completed pilot separately charges c_a=0.002; its other cost is the chance of making the answer worse. Data are priced, and a diagnostic experiment costs more than more of the same.</figcaption>
-  </figure>
+<section class="section" id="protocol" aria-labelledby="protocol-title"><div class="section-number">02<span>The comparison</span></div><div class="section-body"><h2 id="protocol-title">Save one state. Examine three next steps.</h2><p class="lead">After the first answer, we separate what the agent says a step is worth from what a continuation actually achieves.</p><div class="flow-intro" aria-label="First analysis and answer, then save the state"><div class="flow-step">First analysis &amp; answer<small>One bounded analysis window</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="flow-step saved">Save state<small>The common starting point</small></div></div><div class="fork-grid"><div class="fork-panel"><h3>Ask in separate copies</h3><p>Estimate each action’s gain and choose at each of three data prices.</p><p>Discard these copies so the elicitation cannot guide the executed continuations.</p><p class="small">A separate probe asks where the remaining error comes from.</p></div><div class="fork-panel"><h3>Run the available continuations</h3><div class="action-row"><span class="action-name">STOP</span><div>Keep the first answer.<small>No additional cost.</small></div></div><div class="action-row"><span class="action-name">ANALYZE</span><div>One additional review window, same data.<small>Analysis cost: 0.002.</small></div></div><div class="action-row"><span class="action-name">SAMPLE</span><div>32 balanced observations, then one review window.<small>Analysis cost 0.002 + data price 0.004, 0.012, or 0.030.</small></div></div></div></div><p class="small">Costs are penalties in the same loss units as MSE, not dollar prices. One window allows up to four Python calls and an 8,000-output-token cap. The saved results identify the agent as Claude Sonnet 5.5.</p><div class="callout"><p><strong>Important mismatch:</strong> the agent estimated the value of its proposed data allocation, while the executed branch used a balanced allocation. These are not identical actions. Their difference is therefore not a clean calibration error.</p></div><div class="metrics"><div class="metric"><div class="number">12 → 24</div><p>Underlying scenarios repeated under two prompt/backend conditions.</p></div><div class="metric"><div class="number">2</div><p>Continuations averaged per executed branch, per state. STOP keeps the first answer.</p></div><div class="metric"><div class="number">72</div><p>Elicited choices: 24 states × 3 prices. Not 72 independent tasks.</p></div></div></div></section>
 
-  <h3>Illustration for the proposed setup</h3>
-  <p>An analyst asks whether a drug lowers blood pressure, using records from two hospitals, and must predict its effect in an older population. The working model is <i>the same effect for every patient, after adjusting for severity</i>. What should come next depends on what is actually true:</p>
-  <figure>
-    <table class="t">
-      <tr><th style="width:46%">What is actually true</th><th>What helps</th></tr>
-      <tr><td>The model is right; the estimate is only noisy</td><td><b>D</b> or stop <span class="g">— rethinking may keep the simple model or add false structure</span></td></tr>
-      <tr><td>The drug works better in older patients</td><td><b>R</b> if it already shows, else <b>X</b> <span class="g">— recruit older patients</span></td></tr>
-      <tr><td>Sicker patients were treated more often</td><td><b>X</b> <span class="g">— a small randomized batch; reanalysis can hedge but not remove the bias</span></td></tr>
-      <tr><td>One hospital's lab reads high</td><td><b>R</b> or <b>X</b> <span class="g">— re-test samples at a reference lab</span></td></tr>
-    </table>
-    <figcaption><b>Table 1.</b> Illustrative hypotheses, not measured outcomes. A feasible move depends on the evidence available to the agent, its costs, and what it can execute; hidden truth alone does not establish what it should have known.</figcaption>
-  </figure>
+<section class="section" id="results" aria-labelledby="results-title"><div class="section-number">03<span>Evidence so far</span></div><div class="section-body"><h2 id="results-title">Some improvements were missed.<br>The reason is not yet isolated.</h2><p class="lead">The pilot shows that the comparison can be run. Some states improved substantially after additional data, but task assumptions, execution effects, and the allocation mismatch limit what we can infer about judgment.</p><div class="table-scroll" role="region" aria-label="Experiment inventory" tabindex="0"><table class="inventory"><thead><tr><th scope="col">Completed experiment</th><th scope="col">What it measures</th><th scope="col">What we learned</th></tr></thead><tbody><tr><td>Continuation curves</td><td>Further analysis on existing data, or a balanced batch of 32 observations followed by analysis.</td><td>Improvement varies by state. The figures below use the one-window horizon that matches the choice probe.</td></tr><tr><td>Structural-prior sensitivity</td><td>Repeat the 12 scenarios with a sentence favoring low-order effects.</td><td>Task interpretation matters, but backend handling of long responses changed too. This is not a clean prompt-only intervention.</td></tr><tr><td>Gain and choice probes</td><td>24 states × 3 prices, plus a separate error-source probe in each state.</td><td>68/72 responses choose STOP. In 71/72, the choice agrees arithmetically with that response’s estimated gains minus costs.</td></tr></tbody></table></div><p class="small">Arithmetic consistency does not establish that the estimates caused the choices. Frequent stopping is not itself an error. The charts below re-score saved branch means; they are not new policy experiments.</p>
+<div class="control-bar" aria-label="Chart controls"><label for="price">Tested data price<select id="price"><option value="0.004">0.004</option><option value="0.012" selected>0.012</option><option value="0.03">0.030</option></select></label><label for="condition">Prompt/backend condition<select id="condition"><option value="all">Both conditions</option><option value="no sentence">Without hierarchy sentence</option><option value="with sentence">With hierarchy sentence</option></select></label><p class="control-explainer">Applies to both figures. Analysis remains one window at cost 0.002.</p></div><p class="small" id="filter-description" aria-live="polite">24 decision states from 12 underlying scenarios. Data price 0.012; total SAMPLE cost 0.014.</p>
+<figure class="chart-card" aria-labelledby="scatter-title"><h3 id="scatter-title">Estimated versus realized data gain</h3><p class="chart-subtitle">Raw MSE reduction · each point is one saved decision state</p><div class="legend"><span><i class="swatch" aria-hidden="true"></i>Without hierarchy sentence</span><span><i class="swatch rust" aria-hidden="true"></i>With hierarchy sentence</span></div><svg id="scatter" class="chart-svg" viewBox="0 0 760 470" role="img" aria-labelledby="scatter-title scatter-description"><desc id="scatter-description">Realized data gain on the horizontal axis and price-specific estimated gain on the vertical axis.</desc></svg><div class="selected-point" id="point-readout" aria-live="polite">Hover over or focus a point for its values. The same values are available in the data table.</div><figcaption class="chart-caption">The diagonal marks equal estimated and realized gains. Dashed lines mark the <strong>total SAMPLE cost</strong>: data plus analysis. Crossing a line compares SAMPLE with STOP only; beating ANALYZE also depends on the analysis gain. Actual gains average two continuations and use a different allocation from the estimates.</figcaption><div class="readout" id="scatter-readout"></div><details><summary>View the scatter data</summary><div class="table-scroll" role="region" aria-label="Scatter data" tabindex="0"><table class="data-table"><caption>Original price-specific responses and saved continuation means. Raw gains do not subtract costs.</caption><thead><tr><th scope="col">Scenario</th><th scope="col">Condition</th><th scope="col">N</th><th scope="col">Realized gain</th><th scope="col">Estimated gain</th><th scope="col">Reported choice</th></tr></thead><tbody id="scatter-data"></tbody></table></div></details></figure>
+<figure class="chart-card" aria-labelledby="loss-title"><h3 id="loss-title">Compare choices under the original costs</h3><p class="chart-subtitle">Mean loss = prediction MSE + action cost · lower is better</p><svg id="loss-chart" class="chart-svg" viewBox="0 0 760 340" role="img" aria-labelledby="loss-title loss-description"><desc id="loss-description">Mean losses for fixed actions, the elicited choice, and the lowest recorded loss in each state.</desc></svg><figcaption class="chart-caption">This is <strong>post hoc re-scoring of the same saved outcomes</strong>, using one analysis window and the original costs. “Elicited choice” assigns each reported choice its saved branch mean; it is not a fresh autonomous policy run. The per-state minimum selects after seeing outcomes. It is an optimistic comparator, not a deployable policy or known optimal expected utility.</figcaption><div class="readout" id="loss-readout"></div><details><summary>View the loss data and formulas</summary><p class="small mono">STOP = first-answer MSE<br>ANALYZE = one-window MSE + 0.002<br>SAMPLE = data-branch MSE + 0.002 + selected data price</p><div class="table-scroll" role="region" aria-label="Mean policy losses" tabindex="0"><table><thead><tr><th scope="col">Rule</th><th scope="col">Mean loss</th><th scope="col">States</th></tr></thead><tbody id="loss-data"></tbody></table></div></details></figure>
+<div class="example"><div class="eyebrow">One selected state · C-s22-N32 · without hierarchy sentence</div><h3 style="margin-top:10px">A large gain that the estimate did not anticipate</h3><div class="example-values"><div><span>First-answer MSE</span><strong>0.05717</strong></div><div class="flow-arrow" aria-hidden="true">→</div><div><span>After balanced data + analysis</span><strong>0.00914</strong></div></div><p>At data price <strong>0.012</strong>, the agent estimated a raw gain of <strong>0.004</strong> and chose STOP. The recorded mean gain was <strong>0.04803</strong>, against a total SAMPLE cost of <strong>0.014</strong>.</p><p class="small">This example stays at its stated price when chart controls change. It averages two continuations. The estimated allocation and executed balanced allocation differ. It illustrates a discrepancy, not proof that the gain was predictable beforehand or that this pattern is general.</p></div><details><summary>How to read the reported AUC values</summary><p class="small">Across all 24 states, data-gain AUC is <strong>0.88</strong> and one-window analysis-gain AUC is <strong>0.50</strong>. These use each state’s gain estimate <strong>averaged over all three prices</strong>, and label a state positive when its realized raw gain is at least 0.002. They compare one action across states, not action ranking within a state or whether buying data beats its price. The interactive scatter instead uses the original response at the selected price.</p></details></div></section>
 
-  </details>
-</section>
+<section class="section" id="limits" aria-labelledby="limits-title"><div class="section-number">04<span>Interpretation</span></div><div class="section-body"><h2 id="limits-title">What the pilot does—and does not—establish</h2><p class="lead">The defensible result is a feasibility demonstration and a set of measurement lessons. It does not yet establish a general failure of research strategy.</p><div class="limitations"><div class="limitation"><h3>The actions do not quite match</h3><p>The elicited data estimate concerns the agent’s allocation; the continuation uses balanced observations. A direct difference mixes value judgment with action definition.</p></div><div class="limitation"><h3>Some uncertainty is structural</h3><p>The even/odd split leaves observationally equivalent rules. Additional records can reduce noise without resolving how to extrapolate to the held-out half.</p></div><div class="limitation"><h3>Execution affects the outcome</h3><p>Token caps and different handling of long responses can influence improvements. Two continuations per action are too few to establish a precise expected value.</p></div><div class="limitation"><h3>The evidence is a summary snapshot</h3><p>The saved per-state table supports the numerical checks. Full raw transcripts are unavailable in the local snapshot, so behavior-level verification and reproduction remain incomplete.</p></div></div><details><summary>What the statistical references assume</summary><p class="small">Ref-G knows the four generating rule families. Ref-O uses a broader sparse low-order model, but sets higher-order effects to zero and uses numerical approximations. Neither is an assumption-free measure of what this agent should have known or could recover. The figures above use recorded agent outcomes, not a reference observer’s predictions.</p></details><div class="callout teal"><p><strong>Status boundary:</strong> the new causal environment, diagnosis-specific actions, and a learned controller have not been implemented or evaluated. The earlier four-category action proposal remains a possible future design, not part of these results.</p></div></div></section>
 
-<!-- ============ motivation ============ -->
-<section id="motivation">
-  <h2>Motivation and closest evidence</h2>
-  <p class="lede">Existing work already studies research judgment, recovery, evidence use and diagnostic experimentation. Our broad motivation is credible; a distinct contribution has not yet been established.</p>
-  <p>We want to distinguish estimating value, choosing an action and executing it. Continuing different actions from a saved state can reveal outcome differences. It does not, by itself, prove that the agent could have anticipated the better outcome with the evidence it had.</p>
-  <figure><div class="tscroll"><table class="t">
-    <tr><th>Nearby work</th><th>What it already studies</th><th>Boundary relevant here</th></tr>
-    <tr><td class="n">The Tasteful Agent</td><td>Judging two supplied next-step alternatives; 112 research items, plus engineering training and transfer.</td><td>Supplied-option judgment differs from autonomously generating an alternative or detecting when one is needed.</td></tr>
-    <tr><td class="n">SAGE</td><td>Multiple failure explanations, critic assessment and hierarchical recovery; more metrics-bearing artifacts in a 12-topic evaluation.</td><td>Failure attribution and recovery routing already exist. Critic verification is not experimental identification of the cause.</td></tr>
-    <tr><td class="n">CORRAL</td><td>Task outcomes, evidence/revision graphs and successful-prefix interventions.</td><td>Process evaluation already exists. Graph motifs do not alone establish avoidable decision errors; some appendix narrative statistics conflict with the main results.</td></tr>
-    <tr><td class="n">LLM-IDEA · Outgrow a Theory</td><td>Identifiability diagnostics, discriminating experiments, and coupled theory revision/experiment selection.</td><td>“Diagnose before changing course” is already covered. Open implementation uncertainty and diagnosis cost need a closer comparison.</td></tr>
-    <tr><td class="n">Metacognitive Steering</td><td>Steering exploration, convergence and scrutiny; behavioral and application demonstrations.</td><td>Changing a research regime does not establish the best time to change it; application systems contain other components.</td></tr>
-  </table></div><figcaption><b>Table 2.</b> Scope of sources read in the current literature review. These are evidence boundaries, not a yes/no novelty scorecard. See <a href="meeting.html">the Chinese meeting guide</a> and the evidence locations below.</figcaption></figure>
-  <div class="callout"><div class="lbl">Working question, not a novelty claim</div><p>When a poor result has several plausible explanations, can an agent judge what the evidence rules out and whether another diagnostic check is worth its cost? We are also considering whether the main bottleneck is generating useful alternatives. Real trace analysis should decide between these candidates.</p></div>
-</section>
+<section class="section" id="framing" aria-labelledby="framing-title"><div class="section-number">05<span>The question now</span></div><div class="section-body"><h2 id="framing-title">From choosing a step to explaining a bottleneck</h2><p>Our literature review found close work on next-step selection, failure diagnosis, diagnostic experiments, and counterfactual continuation values. These ingredients alone do not establish novelty. We need a specific recurring mechanism and its consequences.</p><p class="question">Can a research agent revise its explanation of a bottleneck—and use that explanation to predict which interventions will help, and where they will fail?</p><p class="small">This is an exploratory focus, not an established contribution or a fixed experimental design.</p><div class="mini-card" style="margin-top:28px"><h3>A motivating case: performance versus its cause</h3><p>The <a href="https://rikiyat.github.io/blog/weight-space-programming/">Weight-Space Programming article</a> illustrates how low math performance can reflect a generation-control obstacle. Removing that obstacle is a narrower claim than creating new mathematical ability.</p><p class="small">The setup requires weight editing; it does not establish whether an agent would autonomously choose that intervention level. The released Qwen and Gemma logs are candidate case-study material. The article and experiment documentation have been checked; the full trajectories have not yet been audited.</p></div><details><summary>Selected context from the literature</summary><div class="references"><div class="reference"><a href="https://arxiv.org/abs/2609.25804">The Tasteful Agent</a><small>Judgment at decision forks mined from recorded trajectories.</small></div><div class="reference"><a href="https://arxiv.org/abs/2610.11253">LLM-IDEA</a><small>Identifiability analysis and experiment selection in a discovery loop.</small></div><div class="reference"><a href="https://arxiv.org/abs/2610.07627">Learning to Outgrow a Theory</a><small>Jointly proposing a model-class edit and a diagnostic experiment.</small></div><div class="reference"><a href="https://arxiv.org/abs/2606.21399v2">Calibration Is Not Control</a><small>Action value, prefix branching, and the limits of risk-based intervention.</small></div><div class="reference"><a href="https://arxiv.org/abs/2603.06859v4">The Trace Is the State</a><small>Counterfactual continuation values and their sampling uncertainty.</small></div><div class="reference"><a href="https://arxiv.org/abs/2609.16245">Metacognitive Steering</a><small>Control of scientific exploration, execution, and reassessment.</small></div></div></details></div></section>
 
-<!-- ============ preliminary ============ -->
-<section id="preliminary">
-  <h2>Completed switch-box pilot: preliminary results</h2>
-  <p class="lede">In this pilot, estimated data gains show some useful ordering but underestimate the largest observed gains. The agent often chooses STOP. This is descriptive evidence from a small synthetic task family, not a general result about research agents or a proven cause of their decisions.</p>
-
-  <h3>What we ran</h3>
-  <p>These completed runs used the <b>switch box</b> and the configured model string <code>claude-sonnet-5-5</code> through the Claude CLI. The underlying serving snapshot has not been independently verified. The decision menu was <b>STOP, ANALYZE, SAMPLE</b>; A and R were not separately executed conditions.</p>
-  <div class="chainbox"><div class="lbl">at each of the 24 moments</div>
-    <div class="chain">
-      <span class="chip"><i>1</i>Claude's first answer</span><span class="arrow">→</span>
-      <span class="chip dark">save</span><span class="arrow">→</span>
-      <span class="chip"><i>2</i>ask what each option would gain; discard the copy</span><span class="arrow">→</span>
-      <span class="chip"><i>3</i>run the options from the save</span><span class="arrow">→</span>
-      <span class="chip"><i>4</i>compare estimate with actual gain</span>
-    </div>
-  </div>
-  <figure>
-    <table class="t">
-      <tr><td class="n" style="width:22%">The box</td><td>Six on/off switches, so 64 settings. Pressing a button lights a lamp with a probability that depends only on the setting. The hidden rule is one of four: A: no effect; B: one pairwise interaction (±0.3); C: one main effect (±0.2); D: a main effect (±0.2) plus a pairwise interaction (±0.2).</td></tr>
-      <tr><td class="n">The data</td><td>A record is one press: a setting and whether the lamp lit. The agent gets records only for the 32 settings with an even number of switches on: N=32 gives one observation per visible setting; N=128 gives four per setting.</td></tr>
-      <tr><td class="n">The answer</td><td>A lamp probability for all 64 settings, scored on the 32 settings it never sees: mean squared error against the true probabilities. MSE 0.01 corresponds to RMSE 0.10 (10 percentage points), not a 10-point error at every setting.</td></tr>
-      <tr><td class="n">First answer</td><td>One analysis window: up to 4 Python runs and 8,000 output tokens including thinking, followed by submission. Truncation affected some continuations.</td></tr>
-      <tr><td class="n">The 24 moments</td><td>12 tasks (4 rules × 3 seeds: 8 tasks with 128 records, 4 with 32), each run in two versions of the task text, with and without one sentence saying that effects of three or more switches are rare. Each moment is saved right after the first answer. These are 12 tasks × 2 prompt conditions, not 24 independent tasks. CLI truncation handling also differed between the two runs (restart versus truncate), so this is not a clean causal ablation of the hint.</td></tr>
-      <tr><td class="n">What we asked</td><td>In copies we then threw away: you may stop (free), analyze one more window (price 0.002), or get 32 new records and analyze (0.002 plus a data price of 0.004, 0.012 or 0.03). How much would each lower your error, and which do you choose?</td></tr>
-      <tr><td class="n">What we ran</td><td>From the same save, two repetitions of SAMPLE (+32 balanced records, then one review window) and two ANALYZE chains (four successive review windows on unchanged data). Figure 3 uses the first extra window to match the one-window decision menu; the later windows are a separate continuation analysis.</td></tr>
-      <tr><td class="n">Actual gain</td><td>Raw gain = initial MSE minus branch MSE, averaged over two repetitions. Net gain subtracts the action cost: 0 for STOP, c_a=0.002 for +1 ANALYZE, c_a+c_d for SAMPLE. Ref-G is a Bayesian reference given the true generator families, an additional prior unavailable in general; it is not a universal oracle.</td></tr>
-    </table>
-    <figcaption><b>Table 3.</b> The preliminary setup. One model, two runs per option, small sample: read only the direction. Claude estimated the gain of 32 records placed where it chose; we ran one record per visible setting.</figcaption>
-  </figure>
-
-  <h3>One moment, reconstructed from the earlier report</h3>
-  <p>The following C-s22 transcript details and quotations come from the earlier project report. The raw pilot transcripts were not re-read in this audit and are not present in this local checkout.</p>
-  <div class="box"><div class="lbl">task C-s22: 32 records, one moment</div><ul class="steps">
-    <li><b>The truth.</b> The lamp lights 70% of the time when switch 1 is on and 30% when it is off. No other switch matters.</li>
-    <li><b>Claude's first answer.</b> In these 32 presses, more switches on happened to mean more light (2 switches on: 3 of 15 lit; 4 on: 8 of 15), and switch 1 looked only mildly useful (on: 8 of 16 lit; off: 4 of 16). A leave-one-out comparison picked "number of switches on" as the model, predicting 7% with none on up to 80% with all on. MSE 0.057, equivalent to about 24 percentage points RMSE across settings.</li>
-    <li><b>What it said when asked.</b> The earlier report summarizes the three-price mean estimate as about 0.0053 (Figure 2 instead uses the single-price estimate 0.004), because "on the even subspace each Fourier term is indistinguishable from its complement … no even-parity sample can resolve that." It chose stop at all three prices.</li>
-    <li><b>What actually happened.</b> Given 32 more records (a second press of each visible setting), switch 1 stood out (on: 69% lit; off: 28%). Claude refit switch 1 plus the count, and the error fell to 0.009: a gain of 0.048, about nine times the earlier three-price mean estimate. Four more windows without new data moved the error only to 0.054.</li>
-    <li><b>What this supports.</b> Extra balanced observations coincided with a large error reduction in this continuation. The structural aliasing concern remains real. This example does not isolate sampling noise as the root cause, since the subsequent analysis also changed.</li>
-  </ul></div>
-
-  <h3>1 · Ranking and magnitude differ in this pilot</h3>
-  <figure>
-    <div class="chart-card" id="c1">
-      <button class="viewtable" data-for="c1">table</button>
-      <div class="ct">Claude's estimate against the actual gain from 32 more records</div>
-      <div class="cs">24 states = 12 tasks × 2 conditions. Estimate elicited at c_d=0.012; raw gain from +32 balanced records and one window.</div>
-      <div class="chart"></div><div class="tablewrap hidden"></div>
-    </div>
-    <figcaption><b>Figure 2.</b> Both axes are <b>raw MSE reduction</b>. Each estimate comes from that state’s single probe at c_d=0.012. The threshold is <b>0.014 = c_a + c_d</b>: crossing it makes SAMPLE better than STOP only. To be globally best, SAMPLE must also beat ANALYZE (g<sub>D</sub> − g<sub>A</sub> ≥ c_d). The shaded area marks a missed SAMPLE-versus-STOP opportunity, not the full choice rule. Realized gains average two runs; the estimated data allocation differs from the balanced allocation actually executed. Ref-G in the table is G<sup>G</sup>(q0)+EVSI<sup>G</sup>, a generator-informed reference with extra prior information.</figcaption>
-  </figure>
-  <div class="stats">
-    <div class="stat"><div class="v">5–12×</div><div class="k">underestimation for the two largest gains at c_d=0.012</div></div>
-    <div class="stat"><div class="v">0<small> of 2</small></div><div class="k">states where SAMPLE beat STOP at c_d=0.012 and the agent selected SAMPLE</div></div>
-    <div class="stat"><div class="v">68<small> of 72</small></div><div class="k">elicited choices were STOP across 24 states × 3 prices; not 72 independent tasks</div></div>
-  </div>
-  <p>For predicting raw gain ≥0.002, the reported three-price-mean estimate has AUC 0.88; the single-price estimates plotted here give AUC 0.84. This “helpful” label is different from exceeding the 0.014 buying threshold. Across all 72 probes, 71 choices are arithmetically consistent with the gains reported in the same response. That is self-report consistency, not evidence that an estimated value caused the action. Agent choice and always-STOP have approximately the same mean regret across prices: 0.00300 versus 0.00302, despite different choices.</p>
-
-  <h3>2 · Compare the same actions at the original costs</h3>
-  <figure>
-    <div class="chart-card" id="c2">
-      <button class="viewtable" data-for="c2">table</button>
-      <div class="ct">Matched-cost loss: prediction MSE + action cost (lower is better)</div>
-      <div class="cs">Original costs: c_a=0.002, c_d=0.012 · +1 analysis window · separate prompt conditions</div>
-      <div class="chart"></div><div class="tablewrap hidden"></div>
-    </div>
-    <figcaption><b>Figure 3.</b> STOP loss = q0 MSE; ANALYZE = +1-window MSE +0.002; SAMPLE = +32-record, +1-window MSE +0.014. Each group contains the same 12 tasks; the CLI truncation/restart behavior also changed between runs, so group differences cannot be attributed solely to the hint. “Agent’s elicited choice” maps the probe choice at c_d=0.012 to that branch’s measured mean; it is not an additional autonomous rollout. “Hindsight minimum” selects the minimum of noisy branch means in each state, then averages; it is a descriptive reference, not a deployable policy or a known population optimum. The former free-analysis/+4-window chart used a different, post hoc objective and has been removed from the main comparison.</figcaption>
-  </figure>
-
-  <h3>3 · The action menu limits what this pilot can show</h3>
-  <div class="callout">
-    <div class="lbl">a limitation, not evidence that a particular replacement is required</div>
-    <p>The switch box hides half of the switch settings. The earlier report describes the agent recognizing aliasing on the hidden half; the task offered no way to collect observations there. So "test the explanation with a new kind of data" was impossible in this toy. The causal toy below was proposed to add diagnostic actions. It has not been implemented or run, and real-trace evidence may favor a different design.</p>
-  </div>
-</section>
-
-<!-- ============ questions ============ -->
-<section id="questions">
-  <h2>Goal and questions</h2>
-  <p class="lede">The goal is to compare an agent's own estimate of each next step with what that step actually gains, against ground truth and counterfactual runs, and to find where the judgment breaks.</p>
-  <table class="t">
-    <tr><th style="width:70px"></th><th>Question</th><th style="width:38%">How we read it</th></tr>
-    <tr><td><span class="pill">Q1</span></td><td><b>Do its estimates match the real gains?</b><br><span class="g">ranking · size · relative to the price · too low or too high</span></td><td class="g">its estimate of each step against that step's realized gain from the same state: rank, and calibration of size</td></tr>
-    <tr><td><span class="pill">Q2</span></td><td><b>Where does the call break?</b><br><span class="g">in the estimate · in the choice · in the execution</span></td><td class="g">choice against its own estimates; assigned branch against what it actually did</td></tr>
-    <tr><td><span class="pill">Q3</span></td><td><b>Is there room for judgment?</b><br><span class="g">or do fixed policies (always review, fit every model up front) come close?</span></td><td class="g">fixed policies against the best per-state choice; reported either way</td></tr>
-    <tr><td><span class="pill">Q4</span></td><td><b>Can it be repaired?</b><br><span class="g">value calibration: feedback on practice states, or an outside rescaling</span></td><td class="g">regret on new seeds, at matched cost, with no extra false structure</td></tr>
-  </table>
-
-</section>
-
-<!-- ============ setup ============ -->
-<section id="setup">
-  <h2>Proposed causal setup — not implemented or run</h2>
-  <p class="lede">Everything in this section is a proposed design, not completed work. The intended design would save a decision state, elicit estimates in a discarded copy, and execute candidate continuations. Neither the causal generator, its reference observer, the four-category menu, nor its agent runs have been implemented. Model choice and protocol remain to be decided after reviewing real traces.</p>
-  <details><summary><b>Expand proposed design (not run)</b></summary>
-
-
-  <div class="box"><div class="lbl">terms used below</div><ul class="steps">
-    <li><b>Window.</b> One stretch of analysis: the agent reads the data, runs Python, and submits an answer.</li>
-    <li><b>Decision point.</b> The moment right after it submits, when it could stop or take another step.</li>
-    <li><b>Discarded copy.</b> A copy of the saved state where we ask questions; it is thrown away, so the questions cannot change later runs.</li>
-    <li><b>Branch.</b> One option, run for real from the saved state.</li>
-    <li><b>Raw gain.</b> Error before the step minus error after it.</li>
-    <li><b>Net gain.</b> Raw gain minus the explicitly specified action cost. Planned causal-toy costs are not yet frozen; do not confuse them with the completed pilot costs above.</li>
-  </ul></div>
-
-  <h3>Proposed environment: a toy causal model</h3>
-  <p>The proposed model would generate synthetic records only. Before implementation, the target must distinguish intervention means E[Y | do(T=t), target population] from observational conditional means E[Y | T=t, target population]. They differ under confounding; calling the task prediction does not settle this choice. No generator or identifiability claim has yet been validated.</p>
-  <div class="box"><div class="lbl">setup</div>
-    <p style="font-size:16.5px">Records from two sites: age <code>A</code>, a baseline score <code>S</code>, treated or not <code>T</code>, outcome <code>Y</code>. Predict the mean outcome with and without treatment in an <b>older</b> target population, as measured by a reference lab.</p>
-  </div>
-  <figure>
-    <table class="t">
-      <tr><th style="width:27%">Hidden truth</th><th style="width:34%">Sign in the existing data</th><th>Diagnostic experiment (X)</th></tr>
-      <tr><td class="n">F0 · simple model is right</td><td class="g">nothing beyond noise</td><td class="g">not needed, though a randomized batch may add precision; revising may keep the simple model or add false structure</td></tr>
-      <tr><td class="n">F1 · effect changes with age</td><td class="g">a weak treatment × age interaction</td><td class="g">recruit units in the target age range</td></tr>
-      <tr><td class="n">F2 · confounding</td><td class="g">S may differ between treated and untreated; this alone does not diagnose hidden confounding</td><td class="g">candidate randomized batch; identification properties must be specified and verified</td></tr>
-      <tr><td class="n">F3 · one lab reads high</td><td class="g">a site difference, which could also be real</td><td class="g">re-test stored samples at the reference lab</td></tr>
-    </table>
-    <figcaption><b>Table 4.</b> One truth per task, effect sizes drawn so some tasks are easy and some hard. With a small effect each of F1–F3 looks like F0. A planned reference observer would average over F0–F3; the proposed closed-form/integration calculation has not been implemented or verified. The intended menu would offer every option in every task.</figcaption>
-  </figure>
-  <div class="two">
-    <div class="box"><div class="lbl">why causal</div><ul>
-      <li>Design target: construct alternatives that observational data cannot distinguish but a diagnostic action can. The proposed F0/F2 observational equivalence has not been proved or implemented.</li>
-      <li>The design aims to create states where different evidence sources have different values; this must be verified rather than assumed.</li>
-    </ul></div>
-    <div class="box"><div class="lbl">why build our own</div><ul>
-      <li>The proposal seeks look-alike truths, a tractable reference and several remedies; whether a new environment is necessary remains open.</li>
-      <li>Existing environments and recent diagnosis/revision systems must be compared before committing to a custom toy.</li>
-    </ul></div>
-  </div>
-
-
-  <h3>What the agent gets and returns</h3>
-  <figure>
-    <table class="t">
-      <tr><td class="n" style="width:22%">Given</td><td>Records from two sites (site, age <code>A</code>, baseline score <code>S</code>, treated <code>T</code>, outcome <code>Y</code>); a short, neutral description of the study and of the older target population; the list of options and their prices</td></tr>
-      <tr><td class="n">Tools</td><td>A Python sandbox. All analysis draws on one shared budget of analysis windows and tokens</td></tr>
-      <tr><td class="n">Returns</td><td>The predicted mean outcome with and without treatment in the target population, and one sentence stating its working model</td></tr>
-      <tr><td class="n">Scored by</td><td>Squared error of the two predicted means against the true values, as the reference lab would measure them</td></tr>
-    </table>
-    <figcaption><b>Table 5.</b> Planned observables: stated working model and executed code. A one-sentence self-report alone cannot establish the agent’s internal model or whether it truly changed.</figcaption>
-  </figure>
-
-  <h3>Proposed options — A and R not separately tested</h3>
-  <figure>
-    <table class="t">
-      <tr><th style="width:30%">Option</th><th>What happens</th><th style="width:26%">Cost</th></tr>
-      <tr><td class="n">Stop</td><td class="g">submit the current answer</td><td class="g">none</td></tr>
-      <tr><td class="n">A · analyze more</td><td class="g">continue on the same data</td><td class="g">no price; uses the analysis budget</td></tr>
-      <tr><td class="n">R · rethink the explanation</td><td class="g">continue after a framework-review prompt</td><td class="g">no price; uses the analysis budget</td></tr>
-      <tr><td class="n">D · same-kind data</td><td class="g">a new batch of units from the study</td><td class="g">cheap</td></tr>
-      <tr><td class="n">X1 · target-age batch</td><td class="g">units in the target age range</td><td class="g">more expensive</td></tr>
-      <tr><td class="n">X2 · randomized batch</td><td class="g">units with treatment assigned at random</td><td class="g">more expensive</td></tr>
-      <tr><td class="n">X3 · reference-lab re-test</td><td class="g">stored samples measured again at the reference lab</td><td class="g">more expensive</td></tr>
-    </table>
-    <figcaption><b>Table 6.</b> The proposal calls for two price levels, to be selected by simulation before any future run; neither calibration nor runs are complete. Every task lists every option, whatever the truth.</figcaption>
-  </figure>
-
-  <h3>Planned trial, step by step</h3>
-  <div class="chainbox"><div class="lbl">at one decision point</div>
-    <div class="chain">
-      <span class="chip"><i>1</i>first analysis window; the agent decides when to submit</span><span class="arrow">→</span>
-      <span class="chip dark">save</span><span class="arrow">→</span>
-      <span class="chip"><i>2</i>ask, then discard the copy</span>
-    </div>
-    <ul class="steps">
-      <li>Which option would you take, at each price?</li>
-      <li>How much would each option lower your error?</li>
-      <li>Where does the remaining error come from: data, analysis, the model, or nothing?</li>
-      <li>How likely is it that more analysis makes the answer worse?</li>
-    </ul>
-  </div>
-  <div class="chainbox"><div class="lbl">then, from the same save: every branch for two more windows (the rest of the budget)</div>
-    <div class="chain">
-      <span class="chip">STOP</span><span class="chip k">A</span><span class="chip b">R</span><span class="chip k">D</span><span class="chip b">X1</span><span class="chip b">X2</span><span class="chip b">X3</span><span class="arrow">+</span>
-      <span class="chip">controls: plain continue · "confirm or revise" · generic review</span>
-    </div>
-    <div class="chain" style="margin-top:8px">
-      <span class="chip"><i>3</i>record each option's realized gain and its spread</span><span class="arrow">→</span>
-      <span class="chip"><i>4</i>record what the agent actually did</span><span class="arrow">→</span>
-      <span class="chip"><i>5</i>compare with its estimates and its choice</span>
-    </div>
-  </div>
-  <p style="margin-top:14px">A and R are prompts, not behaviors, so step 4 checks whether the stated working model or the code really changed. An option counts as best in a state only when it clearly beats the next one.</p>
-  <p>In the proposal, Stage 0 would fork once, right after the first answer. Stage 1 would also let the agent follow its own choices and fork again at 2–3 later decision points along that path, to see whether its estimates keep up as a step's value changes.</p>
-
-  <h3>Conditions and comparisons</h3>
-  <div class="two">
-    <div class="box"><div class="lbl">prompt conditions</div><ul>
-      <li><b>Neutral:</b> goal, data and options only.</li>
-      <li><b>Generic review:</b> "Check your analysis for omissions or errors."</li>
-      <li><b>Framework review:</b> "Test the core assumptions of your model, consider alternative explanations, and consider what evidence could tell them apart."</li>
-      <li class="cite">None names a mechanism or says the model is wrong.</li>
-    </ul></div>
-    <div class="box"><div class="lbl">starting point</div><ul>
-      <li><b>Main:</b> the agent's own first window.</li>
-      <li><b>Ablation:</b> it takes over a saved first window from another run or another model, since models treat others' errors differently from their own.</li>
-    </ul></div>
-  </div>
-  <div class="two">
-    <div class="box"><div class="lbl">fixed-policy baselines</div><ul>
-      <li>Always stop; always analyze k more rounds; always run the framework review; always buy diagnostic data.</li>
-      <li>Fit every candidate model at the start, then select.</li>
-      <li>A sequential model-class test, and a residual trigger.</li>
-      <li class="cite">All share the agent's analysis budget.</li>
-    </ul></div>
-    <div class="box b"><div class="lbl">the repair: value calibration</div><ul>
-      <li><b>Feedback:</b> before deciding, the agent sees its past estimates next to the realized gains on a few practice states.</li>
-      <li><b>Outside rescaling:</b> a monotone map from its estimates to realized gains, fitted on development seeds. It can fix the size, not the order, so it helps only if the ranking is good.</li>
-      <li class="cite">Would be tested on new seeds, at matched cost; no repair evaluation has run.</li>
-    </ul></div>
-  </div>
-
-  <h3>Planned check: do these categories fit real actions?</h3>
-  <div class="box"><div class="lbl">trace-coding check</div><ul class="steps">
-    <li><b>Why.</b> The four kinds come from two questions, top down. The proposed check would code real traces, allow mixed/other actions, and revise or reject the taxonomy. It has not been performed.</li>
-    <li><b>Traces.</b> Potential material includes saved switch-box windows and public agent traces. The raw switch-box transcripts are not in this local checkout. The proposed causal toy cannot validate its own categories, since its menu would impose them.</li>
-    <li><b>Report.</b> The share of steps the four kinds cover, agreement between two coders, and what the "other" steps are. If many are "other", we change the kinds before building the application environment.</li>
-  </ul></div>
-
-  <h3>Proposed scale and stopping rules — no runs started</h3>
-  <p><b>Planned Stage 0</b> (budget sketch: about 300 analysis windows, not executed): 4 truths × 2 data sizes × 3 seeds = 24 states, with branches STOP, A, R, D and the three X options, one run each. <b>Planned Stage 1</b> (budget sketch: at most about 800, not executed) would run only if Stage 0 passed: more seeds, a second run of the main branches, controls, the prompt conditions, a start from another run's saved state, forks at later decision points, and the value-calibration repair on new seeds. The trace-coding check needs no new agent runs.</p>
-  <figure>
-    <table class="t">
-      <tr><th style="width:48%">We stop or change course if…</th><th>Then</th></tr>
-      <tr><td>one remedy has the largest gain in almost every state</td><td class="g">recalibrate the toy once; stop if still one-sided</td></tr>
-      <tr><td>the best fixed policy ≈ the best per-state choice</td><td class="g">report it; the main line stops</td></tr>
-      <tr><td>Claude's estimates are already right in rank and size, and choices follow</td><td class="g">drop the "misjudges value" claim; report what it does well</td></tr>
-      <tr><td>many coded steps fall outside the four kinds</td><td class="g">add or split a kind before the application environment</td></tr>
-    </table>
-    <figcaption><b>Table 7.</b> Proposed safeguards: calibrate thresholds by simulation and freeze them before future runs. That calibration has not been carried out.</figcaption>
-  </figure>
-
-  </details>
-</section>
-
-<section id="evidence">
-  <h2>Evidence locations and access</h2>
-  <p>Source paths below refer to the local project workspace; these files are not all published with this page. If private GitHub links are unavailable, use the <a href="meeting.html">Chinese meeting guide</a>, also at <code>site/meeting.html</code>.</p>
-  <div class="tscroll"><table class="t">
-    <tr><th>Evidence</th><th>Location in the project</th><th>Scope / limitation</th></tr>
-    <tr><td>Completed pilot tables</td><td><code>runs/claude_curves/summary.md</code><br><code>runs/claude_curves_hier/summary.md</code></td><td>12 tasks under two prompt conditions and different CLI truncation handling, not 24 independent tasks.</td></tr>
-    <tr><td>Original pilot interpretation</td><td><code>runs/claude_curves/FINDINGS.md</code><br><code>runs/remedy_check/FINDINGS.md</code></td><td>Earlier transcript interpretations were not revalidated against raw transcripts in this audit.</td></tr>
-    <tr><td>Cost and run implementation</td><td><code>env/scoring.py</code><br><code>harness/curves.py</code><br><code>harness/claude_cli.py</code></td><td>Model configuration string is not independent verification of the served model snapshot.</td></tr>
-    <tr><td>Corrected chart inputs</td><td><code>notes/2026-11-03/meeting-audit/plot_data.json</code></td><td>Recomputed from available summaries at the original cost and one-window horizon.</td></tr>
-    <tr><td>Literature and public trace audit</td><td><code>notes/2026-11-03/RESEARCH_SYNTHESIS.md</code><br><code>notes/2026-11-03/traces/READOUT.md</code></td><td>Literature claims and selected public examples; no new model experiments.</td></tr>
-    <tr><td>Raw switch-box transcripts</td><td>Not present in this local checkout.</td><td>Detailed transcript anecdotes remain attributed to earlier reports.</td></tr>
-  </table></div>
-</section>
-
-</main>
-
-<div id="tip" role="status"></div>
-
+<section class="section" id="next" aria-labelledby="next-title"><div class="section-number">06<span>Next steps</span></div><div class="section-body"><h2 id="next-title">Start with complete research episodes</h2><ol class="next-list"><li><div><strong>Reconstruct what was knowable at each decision.</strong><p>Recover the evidence, the agent’s explanation, the actions that explanation suggested, and the later results that supported or challenged it.</p></div></li><li><div><strong>Include cases where persistence was right.</strong><p>Compare successful persistence, useful reconsideration, and unsuccessful changes of direction. A failure seen afterward is not automatically a bad earlier decision.</p></div></li><li><div><strong>Decide whether a recurring phenomenon survives scrutiny.</strong><p>Distinguish diagnosis from execution and measurement. Retain the synthetic prototype; defer expansion until the target mechanism and fair comparison are clearer.</p></div></li></ol><div class="callout"><div class="label" style="color:var(--rust);margin-bottom:10px">For discussion</div><p><strong>Is revising the explanation of a research bottleneck a useful focus?</strong> The recommendation is to test it against concrete cases first, given the overlap with existing diagnosis systems.</p><p><strong>Should we expand the synthetic environment now?</strong> The recommendation is to wait. The tradeoff is slower benchmark production in exchange for a better-founded question.</p></div></div></section>
+<footer><p>Which Way Next? · Research discussion · November 3, 2026<br>Existing results only. No new experiments were run for this update.</p><p><a href="#main">Back to top ↑</a></p></footer>
+</main><div id="tooltip" role="tooltip" hidden></div>
+<script id="public-data" type="application/json">{"rows":[{"run":"no sentence","task_id":"A-s20-N128","N":128,"q0":0.0004732108410493831,"real_a1":-0.0011405844586287633,"real_d":-0.003085350754671312,"err_a1":0.0016137952996781463,"err_d":0.003558561595720695,"est_a":0.0003666666666666666,"est_d":0.002,"est_a_by_price":{"decision@0.004":0.0003,"decision@0.012":0.0003,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.001,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"A-s21-N128","N":128,"q0":0.0009765625,"real_a1":0.0,"real_d":-0.0019685624999999994,"err_a1":0.0009765625,"err_d":0.0029451249999999994,"est_a":0.0,"est_d":0.0018333333333333333,"est_a_by_price":{"decision@0.004":0.0,"decision@0.012":0.0,"decision@0.03":0.0},"est_d_by_price":{"decision@0.004":0.0005,"decision@0.012":0.002,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"A-s22-N32","N":32,"q0":0.0037858437385957077,"real_a1":0.0015358437385957087,"real_d":0.002485843738595705,"err_a1":0.002249999999999999,"err_d":0.0013000000000000023,"est_a":0.0005,"est_d":0.006000000000000001,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.003,"decision@0.012":0.005,"decision@0.03":0.01},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"B-s20-N128","N":128,"q0":0.019457000000000006,"real_a1":0.003922880000000002,"real_d":-0.0004553574999999997,"err_a1":0.015534120000000004,"err_d":0.019912357500000005,"est_a":0.0,"est_d":0.0007666666666666667,"est_a_by_price":{"decision@0.004":0.0,"decision@0.012":0.0,"decision@0.03":0.0},"est_d_by_price":{"decision@0.004":0.0007,"decision@0.012":0.0006,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"B-s21-N128","N":128,"q0":0.010620339999999999,"real_a1":-0.0002999999999999999,"real_d":0.0017022974999999982,"err_a1":0.010920339999999999,"err_d":0.0089180425,"est_a":0.0002666666666666667,"est_d":0.0016666666666666668,"est_a_by_price":{"decision@0.004":0.0,"decision@0.012":0.0008,"decision@0.03":0.0},"est_d_by_price":{"decision@0.004":0.001,"decision@0.012":0.002,"decision@0.03":0.002},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"B-s22-N32","N":32,"q0":0.0036801249999999985,"real_a1":0.0017274999999999977,"real_d":-0.009951460000000006,"err_a1":0.0019526250000000008,"err_d":0.013631585000000005,"est_a":0.0005,"est_d":0.0030000000000000005,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.003,"decision@0.012":0.003,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"C-s20-N128","N":128,"q0":0.002008958767750174,"real_a1":-3.177061612491148e-05,"real_d":-0.0003887415241546851,"err_a1":0.0020407293838750856,"err_d":0.0023977002919048592,"est_a":0.0007666666666666667,"est_d":0.0033333333333333335,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.001,"decision@0.03":0.0008},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.004,"decision@0.03":0.004},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"C-s21-N128","N":128,"q0":0.029720818154520785,"real_a1":0.010010409077260394,"real_d":0.010945635658619383,"err_a1":0.01971040907726039,"err_d":0.0187751824959014,"est_a":0.0005,"est_d":0.0026666666666666666,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.002,"decision@0.03":0.004},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"C-s22-N32","N":32,"q0":0.057168374999999994,"real_a1":0.0027288553125000073,"real_d":0.048025749374999996,"err_a1":0.054439519687499986,"err_d":0.009142625624999994,"est_a":0.0008333333333333334,"est_d":0.005333333333333333,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.0005,"decision@0.03":0.001},"est_d_by_price":{"decision@0.004":0.004,"decision@0.012":0.004,"decision@0.03":0.008},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"D-s20-N128","N":128,"q0":0.0017983399999999985,"real_a1":-0.0019662324999999985,"real_d":-0.0006238024999999999,"err_a1":0.003764572499999997,"err_d":0.0024221424999999984,"est_a":0.0003333333333333333,"est_d":0.002,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.002,"decision@0.03":0.002},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"D-s21-N128","N":128,"q0":0.011152681660899659,"real_a1":0.0,"real_d":0.0024686139748028163,"err_a1":0.011152681660899659,"err_d":0.008684067686096843,"est_a":0.0008333333333333334,"est_d":0.0030000000000000005,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.0005,"decision@0.03":0.001},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.004,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"no sentence","task_id":"D-s22-N32","N":32,"q0":0.03248398499999999,"real_a1":0.0,"real_d":0.006510281813785566,"err_a1":0.03248398499999999,"err_d":0.025973703186214427,"est_a":0.005999999999999999,"est_d":0.017333333333333336,"est_a_by_price":{"decision@0.004":0.005,"decision@0.012":0.01,"decision@0.03":0.003},"est_d_by_price":{"decision@0.004":0.02,"decision@0.012":0.012,"decision@0.03":0.02},"choices":{"decision@0.004":"SAMPLE","decision@0.012":"ANALYZE","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"A-s20-N128","N":128,"q0":0.0037337667198217494,"real_a1":0.00272673546982175,"real_d":-0.0009915722166578527,"err_a1":0.0010070312499999992,"err_d":0.004725338936479602,"est_a":0.0002666666666666666,"est_d":0.0017666666666666666,"est_a_by_price":{"decision@0.004":0.0003,"decision@0.012":0.0002,"decision@0.03":0.0003},"est_d_by_price":{"decision@0.004":0.0008,"decision@0.012":0.0015,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"A-s21-N128","N":128,"q0":0.0009765625,"real_a1":-0.0007031249999999998,"real_d":-0.003296528124999998,"err_a1":0.0016796874999999998,"err_d":0.004273090624999998,"est_a":0.0003333333333333333,"est_d":0.0012,"est_a_by_price":{"decision@0.004":0.0002,"decision@0.012":0.0005,"decision@0.03":0.0003},"est_d_by_price":{"decision@0.004":0.0006,"decision@0.012":0.002,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"A-s22-N32","N":32,"q0":0.01499159693300008,"real_a1":0.007088655118662548,"real_d":0.013691596933000077,"err_a1":0.007902941814337532,"err_d":0.0013000000000000023,"est_a":0.0008333333333333334,"est_d":0.01,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.0005,"decision@0.03":0.001},"est_d_by_price":{"decision@0.004":0.012,"decision@0.012":0.008,"decision@0.03":0.01},"choices":{"decision@0.004":"SAMPLE","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"B-s20-N128","N":128,"q0":0.0017449999999999966,"real_a1":0.0,"real_d":0.00011368749999999747,"err_a1":0.0017449999999999966,"err_d":0.001631312499999999,"est_a":0.0004333333333333333,"est_d":0.002,"est_a_by_price":{"decision@0.004":0.0003,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.003,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"B-s21-N128","N":128,"q0":0.003185157499999998,"real_a1":0.0007428912499999997,"real_d":0.0015648449999999985,"err_a1":0.0024422662499999984,"err_d":0.0016203124999999996,"est_a":0.0005,"est_d":0.0011666666666666668,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.0005,"decision@0.012":0.002,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"B-s22-N32","N":32,"q0":0.004461937499999997,"real_a1":-2.153124999999985e-05,"real_d":-0.004996848749999996,"err_a1":0.004483468749999997,"err_d":0.009458786249999993,"est_a":0.0005,"est_d":0.0034999999999999996,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.0035,"decision@0.012":0.004,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"C-s20-N128","N":128,"q0":0.024903816236572847,"real_a1":0.000323478530166222,"real_d":0.005841467405996184,"err_a1":0.024580337706406625,"err_d":0.019062348830576663,"est_a":0.001,"est_d":0.004666666666666667,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.001,"decision@0.03":0.001},"est_d_by_price":{"decision@0.004":0.004,"decision@0.012":0.005,"decision@0.03":0.005},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"C-s21-N128","N":128,"q0":0.02311751713081922,"real_a1":0.007634613756253244,"real_d":0.011654373419236568,"err_a1":0.015482903374565976,"err_d":0.011463143711582652,"est_a":0.0008333333333333334,"est_d":0.0023333333333333335,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.001,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.002,"decision@0.012":0.002,"decision@0.03":0.003},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"C-s22-N32","N":32,"q0":0.04419921874999999,"real_a1":-0.009978906250000003,"real_d":0.036806838625332225,"err_a1":0.054178124999999994,"err_d":0.00739238012466777,"est_a":0.0006666666666666666,"est_d":0.005,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.001,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.003,"decision@0.012":0.007,"decision@0.03":0.005},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"D-s20-N128","N":128,"q0":0.002656247474586112,"real_a1":0.0007565934953473574,"real_d":-0.0005482594515542065,"err_a1":0.0018996539792387548,"err_d":0.0032045069261403187,"est_a":0.0005,"est_d":0.001,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.001,"decision@0.012":0.001,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"D-s21-N128","N":128,"q0":0.00194791375,"real_a1":0.0,"real_d":-0.0012420399999999985,"err_a1":0.00194791375,"err_d":0.0031899537499999985,"est_a":0.0005,"est_d":0.001,"est_a_by_price":{"decision@0.004":0.0005,"decision@0.012":0.0005,"decision@0.03":0.0005},"est_d_by_price":{"decision@0.004":0.0012,"decision@0.012":0.0008,"decision@0.03":0.001},"choices":{"decision@0.004":"STOP","decision@0.012":"STOP","decision@0.03":"STOP"}},{"run":"with sentence","task_id":"D-s22-N32","N":32,"q0":0.013516877526550132,"real_a1":0.0,"real_d":0.0015639886521141618,"err_a1":0.013516877526550132,"err_d":0.01195288887443597,"est_a":0.0013333333333333333,"est_d":0.01,"est_a_by_price":{"decision@0.004":0.001,"decision@0.012":0.001,"decision@0.03":0.002},"est_d_by_price":{"decision@0.004":0.012,"decision@0.012":0.006,"decision@0.03":0.012},"choices":{"decision@0.004":"SAMPLE","decision@0.012":"STOP","decision@0.03":"STOP"}}],"source_sha256":"deab99b64141850f04e465caa3ceee85ef6536e045452c2ce57a9528d9520b04","audit_date":"2026-11-03","analysis_cost":0.002,"continuations_per_action":2}</script>
 <script>
-const NS = 'http://www.w3.org/2000/svg';
-const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const tip = document.getElementById('tip');
-function el(n, a, p) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
-function txt(p, x, y, s, a = {}) { const t = el('text', Object.assign({ x, y }, a), p); t.textContent = s; return t; }
-function showTip(e, rows) {
-  tip.replaceChildren();
-  rows.forEach(([v, label, color]) => {
-    const val = document.createElement('div'); val.className = 'v'; val.textContent = v;
-    const lab = document.createElement('div');
-    const k = document.createElement('span'); k.className = 'key'; k.style.background = color; lab.appendChild(k);
-    lab.appendChild(document.createTextNode(label));
-    tip.append(val, lab);
-  });
-  tip.style.opacity = 1; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 12) + 'px';
+'use strict';
+const data=JSON.parse(document.getElementById('public-data').textContent);
+const NS='http://www.w3.org/2000/svg';
+const colors={teal:'#17675f',rust:'#a64c2d',ink:'#252620',muted:'#777d70',grid:'#e0e2d8'};
+const byId=id=>document.getElementById(id);
+const fmt=(n,digits=5)=>Number(n).toFixed(digits);
+const conditionName=run=>run==='no sentence'?'Without sentence':'With sentence';
+const mean=values=>values.reduce((a,b)=>a+b,0)/values.length;
+function add(parent,tag,attrs={},content=''){const node=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));if(content!=='')node.textContent=content;parent.appendChild(node);return node;}
+function cell(row,value){const node=document.createElement('td');node.textContent=value;row.appendChild(node);}
+const tip=byId('tooltip');
+function showTip(node,label,event){tip.textContent=label;tip.hidden=false;const box=node.getBoundingClientRect();const left=event&&event.clientX?event.clientX+14:box.right+12;const top=event&&event.clientY?event.clientY+12:box.top;tip.style.left=Math.max(8,Math.min(left,innerWidth-tip.offsetWidth-12))+'px';tip.style.top=Math.max(8,Math.min(top,innerHeight-tip.offsetHeight-12))+'px';}
+function attachTip(node,label,readout){node.setAttribute('tabindex','0');node.setAttribute('aria-label',label);add(node,'title',{},label);node.addEventListener('pointerenter',event=>{showTip(node,label,event);if(readout)readout.textContent=label;});node.addEventListener('pointerleave',()=>{tip.hidden=true;});node.addEventListener('focus',()=>{showTip(node,label);if(readout)readout.textContent=label;});node.addEventListener('blur',()=>{tip.hidden=true;});}
+document.addEventListener('keydown',event=>{if(event.key==='Escape')tip.hidden=true;});
+byId('print-page').addEventListener('click',()=>window.print());
+const switches=Array.from(document.querySelectorAll('.switch'));
+function updateDemo(){const bits=switches.map(b=>b.getAttribute('aria-checked')==='true'?1:0);const count=bits.reduce((a,b)=>a+b,0);const selected=parseInt(bits.join(''),2);byId('demo-bits').textContent=bits.join('');byId('demo-count').textContent=count+' switch'+(count===1?'':'es')+' on';byId('demo-domain').textContent=count%2?'Held-out half · odd':'Observed half · even';byId('demo-domain').classList.toggle('heldout',Boolean(count%2));byId('demo-probability').textContent=bits[0]?'70%':'30%';const grid=byId('configuration-grid');grid.replaceChildren();for(let i=0;i<64;i++){const parity=i.toString(2).split('').filter(x=>x==='1').length%2;const rect=add(grid,'rect',{x:(i%8)*34+3,y:Math.floor(i/8)*34+3,width:27,height:27,rx:5,fill:parity?'#faf8f3':colors.teal,stroke:parity?colors.rust:colors.teal,'stroke-width':parity?1.2:0});add(rect,'title',{},i.toString(2).padStart(6,'0')+' · '+(parity?'held out':'observed'));if(i===selected)add(grid,'rect',{x:(i%8)*34,y:Math.floor(i/8)*34,width:33,height:33,rx:7,fill:'none',stroke:colors.ink,'stroke-width':2.5});}}
+switches.forEach(button=>button.addEventListener('click',()=>{button.setAttribute('aria-checked',button.getAttribute('aria-checked')==='true'?'false':'true');updateDemo();}));
+function losses(row,price){return {STOP:row.q0,ANALYZE:row.err_a1+data.analysis_cost,SAMPLE:row.err_d+data.analysis_cost+price};}
+function renderScatter(rows,price,key){
+ const svg=byId('scatter');svg.replaceChildren();add(svg,'desc',{id:'scatter-description'},'Raw realized data gain on the horizontal axis and original price-specific estimated gain on the vertical axis. Dashed lines show total SAMPLE cost.');
+ const mobile=innerWidth<=620,width=mobile?Math.max(280,Math.round(svg.getBoundingClientRect().width)):760,height=mobile?390:470;
+ svg.setAttribute('viewBox','0 0 '+width+' '+height);
+ const p={left:mobile?51:76,right:width-(mobile?15:40),top:28,bottom:mobile?320:390},lo=-.012,hi=.056,total=price+data.analysis_cost;
+ const x=v=>p.left+(v-lo)/(hi-lo)*(p.right-p.left),y=v=>p.bottom-(v-lo)/(hi-lo)*(p.bottom-p.top);
+ add(svg,'rect',{x:x(total),y:y(total),width:p.right-x(total),height:p.bottom-y(total),fill:'#f4e6da',opacity:.75});
+ (mobile?[-.01,0,.02,.04]:[-.01,0,.01,.02,.03,.04,.05]).forEach(t=>{add(svg,'line',{x1:x(t),x2:x(t),y1:p.top,y2:p.bottom,stroke:colors.grid});add(svg,'line',{x1:p.left,x2:p.right,y1:y(t),y2:y(t),stroke:colors.grid});add(svg,'text',{x:x(t),y:p.bottom+25,'text-anchor':'middle',class:'tick'},fmt(t,2));add(svg,'text',{x:p.left-9,y:y(t)+4,'text-anchor':'end',class:'tick'},fmt(t,2));});
+ add(svg,'line',{x1:x(lo),y1:y(lo),x2:x(hi),y2:y(hi),stroke:'#8d9386','stroke-width':1.5,'stroke-dasharray':'5 5'});add(svg,'text',{x:x(mobile?.025:.04)+7,y:y(mobile?.025:.04)-10},'Equal gain');
+ add(svg,'line',{x1:x(total),x2:x(total),y1:p.top,y2:p.bottom,stroke:colors.rust,'stroke-width':1.5,'stroke-dasharray':'6 5'});add(svg,'line',{x1:p.left,x2:p.right,y1:y(total),y2:y(total),stroke:colors.rust,'stroke-width':1.5,'stroke-dasharray':'6 5'});add(svg,'text',{x:p.right-8,y:y(total)-9,'text-anchor':'end'},'SAMPLE vs STOP: '+fmt(total,3));
+ add(svg,'line',{x1:p.left,x2:p.right,y1:p.bottom,y2:p.bottom,stroke:'#999f92'});add(svg,'line',{x1:p.left,x2:p.left,y1:p.top,y2:p.bottom,stroke:'#999f92'});add(svg,'text',{x:(p.left+p.right)/2,y:height-21,'text-anchor':'middle',class:'axis-title'},mobile?'Realized data gain':'Realized data gain · mean of 2 continuations');add(svg,'text',{transform:'translate('+(mobile?14:21)+' '+((p.top+p.bottom)/2)+') rotate(-90)','text-anchor':'middle',class:'axis-title'},mobile?'Estimated data gain':'Estimated data gain · selected price');
+ const tbody=byId('scatter-data');tbody.replaceChildren();rows.forEach(row=>{const estimate=row.est_d_by_price[key];const label=row.task_id+', '+conditionName(row.run)+': realized gain '+fmt(row.real_d)+', estimated gain '+fmt(estimate)+', reported choice '+row.choices[key]+'.';const point=add(svg,'circle',{cx:x(row.real_d),cy:y(estimate),r:row.task_id==='C-s22-N32'?6.5:5,fill:row.run==='no sentence'?colors.teal:colors.rust,opacity:.82,stroke:'#fffefa','stroke-width':1.5,class:'plot-point'});attachTip(point,label,byId('point-readout'));const tr=document.createElement('tr');[row.task_id,conditionName(row.run),row.N,fmt(row.real_d,6),fmt(estimate,6),row.choices[key]].forEach(v=>cell(tr,v));tbody.appendChild(tr);});
+ const beats=rows.filter(r=>r.real_d>total),bought=rows.filter(r=>r.choices[key]==='SAMPLE'),unique=new Set(beats.map(r=>r.task_id)).size;
+ byId('scatter-readout').innerHTML='<strong>'+beats.length+'/'+rows.length+' states</strong> have recorded SAMPLE loss below STOP ('+unique+' underlying scenario'+(unique===1?'':'s')+'). <strong>'+bought.length+'/'+rows.length+'</strong> reported choices are SAMPLE at this price.';
+ byId('point-readout').textContent='Hover over or focus a point for its values. The same values are available in the data table.';
 }
-function bindTip(node, rows) {
-  node.setAttribute('tabindex', '0'); node.classList.add('mark');
-  node.addEventListener('pointermove', e => showTip(e, rows));
-  node.addEventListener('pointerleave', () => tip.style.opacity = 0);
-  node.addEventListener('focus', () => { const b = node.getBoundingClientRect(); showTip({ clientX: b.right, clientY: b.top }, rows); });
-  node.addEventListener('blur', () => tip.style.opacity = 0);
+function renderLoss(rows,price,key){
+ const labels=[['STOP','Always STOP',colors.muted],['ANALYZE','Always ANALYZE +1',colors.muted],['SAMPLE','Always SAMPLE',colors.muted],['AGENT','Elicited choice',colors.teal],['MIN','Per-state minimum',colors.rust]];
+ const values=labels.map(([id,label,color])=>({id,label,color,value:mean(rows.map(r=>{const l=losses(r,price);return id==='MIN'?Math.min(...Object.values(l)):id==='AGENT'?l[r.choices[key]]:l[id];}))}));
+ const svg=byId('loss-chart');svg.replaceChildren();add(svg,'desc',{id:'loss-description'},'Mean loss under the selected price: prediction MSE plus original action costs. The per-state minimum is selected after observing branch outcomes.');
+ const mobile=innerWidth<=620,width=mobile?Math.max(280,Math.round(svg.getBoundingClientRect().width)):760,height=mobile?390:340;
+ svg.setAttribute('viewBox','0 0 '+width+' '+height);
+ const left=mobile?13:196,right=width-(mobile?73:87),top=mobile?34:31,step=mobile?61:51,max=Math.max(.02,Math.ceil(Math.max(...values.map(v=>v.value))/.01)*.01),x=v=>left+(right-left)*v/max;
+ for(let i=0;i<=4;i++){const tick=max*i/4;add(svg,'line',{x1:x(tick),x2:x(tick),y1:top-12,y2:top+4*step+34,stroke:colors.grid});add(svg,'text',{x:x(tick),y:height-43,'text-anchor':'middle',class:'tick'},fmt(tick,3));}
+ const body=byId('loss-data');body.replaceChildren();values.forEach((item,i)=>{const yy=top+i*step;add(svg,'text',{x:mobile?left:left-12,y:mobile?yy-7:yy+21,'text-anchor':mobile?'start':'end'},item.label);const bar=add(svg,'rect',{x:left,y:yy,width:Math.max(1,x(item.value)-left),height:mobile?25:31,rx:4,fill:item.color,opacity:item.id==='MIN'?.75:1});attachTip(bar,item.label+': mean loss '+fmt(item.value,6)+' over '+rows.length+' states.');add(svg,'text',{x:x(item.value)+9,y:yy+19},fmt(item.value));const tr=document.createElement('tr');[item.label,fmt(item.value,6),rows.length].forEach(v=>cell(tr,v));body.appendChild(tr);});add(svg,'text',{x:(left+right)/2,y:height-11,'text-anchor':'middle',class:'axis-title'},mobile?'MSE + action cost':'Prediction MSE + action cost');
+ const agent=values.find(v=>v.id==='AGENT').value,stop=values.find(v=>v.id==='STOP').value,diff=agent-stop;
+ byId('loss-readout').innerHTML='At this price, elicited-choice loss is <strong>'+fmt(agent)+'</strong>; always-STOP loss is <strong>'+fmt(stop)+'</strong>. Their recorded difference is '+(diff>=0?'+':'')+fmt(diff,6)+'. Within-state continuation variability cannot be recovered from these saved two-run means; no uncertainty interval is shown.';
 }
-function hbar(p, x0, y, w, h, fill) {
-  const r = Math.min(4, w);
-  return el('path', { d: `M${x0},${y} H${x0 + w - r} Q${x0 + w},${y} ${x0 + w},${y + r} V${y + h - r} Q${x0 + w},${y + h} ${x0 + w - r},${y + h} H${x0} Z`, fill }, p);
-}
-const PTS = [["Main effect · 32 records · no hint", "C-s22-N32", 0.048025749374999996, 0.004, 0.04270348363569067, "STOP"], ["Main effect · 32 records · hint", "C-s22-N32", 0.036806838625332225, 0.007, 0.026882522467059185, "STOP"], ["No effect · 32 records · hint", "A-s22-N32", 0.013691596933000077, 0.008, 0.01858020558639991, "STOP"], ["Main effect · 128 records · hint", "C-s21-N128", 0.011654373419236568, 0.002, 0.013378980293804743, "STOP"], ["Main effect · 128 records · no hint", "C-s21-N128", 0.010945635658619383, 0.002, 0.015042601541745873, "STOP"], ["Main effect + interaction · 32 records · no hint", "D-s22-N32", 0.006510281813785566, 0.012, 0.04824758328868448, "ANALYZE"], ["Main effect · 128 records · hint", "C-s20-N128", 0.005841467405996184, 0.005, 0.022001492214755912, "STOP"], ["No effect · 32 records · no hint", "A-s22-N32", 0.002485843738595705, 0.005, 0.01414824434397605, "STOP"], ["Main effect + interaction · 128 records · no hint", "D-s21-N128", 0.0024686139748028163, 0.004, 0.00882938805293827, "STOP"], ["Interaction · 128 records · no hint", "B-s21-N128", 0.0017022974999999982, 0.002, 0.00739793413626829, "STOP"], ["Interaction · 128 records · hint", "B-s21-N128", 0.0015648449999999985, 0.002, 0.0035459809625319814, "STOP"], ["Main effect + interaction · 32 records · hint", "D-s22-N32", 0.0015639886521141618, 0.006, 0.028264515767703467, "STOP"], ["Interaction · 128 records · hint", "B-s20-N128", 0.00011368749999999747, 0.003, 0.002302261699547777, "STOP"], ["Main effect · 128 records · no hint", "C-s20-N128", -0.0003887415241546851, 0.004, 0.0028891779137372254, "STOP"], ["Interaction · 128 records · no hint", "B-s20-N128", -0.0004553574999999997, 0.0006, 0.01770959284712849, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s20-N128", -0.0005482594515542065, 0.001, 0.0014132977189580868, "STOP"], ["Main effect + interaction · 128 records · no hint", "D-s20-N128", -0.0006238024999999999, 0.002, 0.0005703454276056229, "STOP"], ["No effect · 128 records · hint", "A-s20-N128", -0.0009915722166578527, 0.0015, 0.0031133076412365097, "STOP"], ["Main effect + interaction · 128 records · hint", "D-s21-N128", -0.0012420399999999985, 0.0008, 0.002534187072982752, "STOP"], ["No effect · 128 records · no hint", "A-s21-N128", -0.0019685624999999994, 0.002, 0.0011511309897856718, "STOP"], ["No effect · 128 records · no hint", "A-s20-N128", -0.003085350754671312, 0.001, 0.0016631364368281097, "STOP"], ["No effect · 128 records · hint", "A-s21-N128", -0.003296528124999998, 0.002, 0.0011511309897856718, "STOP"], ["Interaction · 32 records · hint", "B-s22-N32", -0.004996848749999996, 0.004, 0.008779190840996862, "STOP"], ["Interaction · 32 records · no hint", "B-s22-N32", -0.009951460000000006, 0.003, 0.0034826706464954043, "STOP"]];
-const D2 = [{"name": "No hint · 12 states", "rows": [["Always STOP", 0.014443853388567974, false], ["+1 ANALYZE", 0.015069945009101105, false], ["SAMPLE + one window", 0.023805091115069853, false], ["Hindsight minimum", 0.010780600184212941, true], ["Agent’s elicited choice", 0.014610520055234642, false]]}, {"name": "Hint · 12 states", "rows": [["Always STOP", 0.011619634335112511, false], ["+1 ANALYZE", 0.01290551724175825, false], ["SAMPLE + one window", 0.02060617191907358, false], ["Hindsight minimum", 0.00876489742094003, true], ["Agent’s elicited choice", 0.011619634335112511, false]]}];
-function grid(svg, xs, top, bottom, max, step, H, digits) {
-  for (let t = 0; t <= max + 1e-9; t += step) {
-    el('line', { x1: xs(t), x2: xs(t), y1: top, y2: bottom, stroke: css('--grid'), 'stroke-width': 1 }, svg);
-    txt(svg, xs(t), H - 6, t.toFixed(digits), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'middle', 'font-variant-numeric': 'tabular-nums' });
-  }
-}
-function chart1(host) {
-  const W = 780, L = 70, R = 24, T = 14, B = 52, PRICE = 0.014;
-  const x0 = -0.012, x1 = 0.05, y0 = 0, y1 = 0.03;
-  const pw = W - L - R, k = pw / (x1 - x0), ph = (y1 - y0) * k, H = T + ph + B;
-  const X = v => L + (v - x0) * k, Y = v => T + ph - (v - y0) * k;
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': "Claude's estimated data gain against the actual gain for 24 moments" });
-  // Shaded corner: SAMPLE beats STOP, but its estimated raw gain is below total cost.
-  el('rect', { x: X(PRICE), y: Y(PRICE), width: X(x1) - X(PRICE), height: Y(0) - Y(PRICE), fill: css('--back') }, svg);
-  txt(svg, X(x1) - 8, Y(PRICE) + 18, 'beats STOP; estimate below total cost', { 'font-size': 12, fill: css('--back-ink'), 'text-anchor': 'end', 'font-weight': 600 });
-  for (let t = -0.01; t <= x1 + 1e-9; t += 0.01) {
-    el('line', { x1: X(t), x2: X(t), y1: T, y2: T + ph, stroke: css('--grid') }, svg);
-    txt(svg, X(t), T + ph + 18, t.toFixed(2), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'middle', 'font-variant-numeric': 'tabular-nums' });
-  }
-  for (let t = 0; t <= y1 + 1e-9; t += 0.01) {
-    el('line', { x1: L, x2: L + pw, y1: Y(t), y2: Y(t), stroke: css('--grid') }, svg);
-    txt(svg, L - 8, Y(t) + 4, t.toFixed(2), { 'font-size': 11, fill: css('--muted'), 'text-anchor': 'end', 'font-variant-numeric': 'tabular-nums' });
-  }
-  el('line', { x1: X(0), x2: X(0), y1: T, y2: T + ph, stroke: css('--axis') }, svg);
-  // price lines
-  el('line', { x1: X(PRICE), x2: X(PRICE), y1: T, y2: T + ph, stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
-  el('line', { x1: L, x2: L + pw, y1: Y(PRICE), y2: Y(PRICE), stroke: css('--back-ink'), 'stroke-width': 1.2, opacity: .7 }, svg);
-  txt(svg, X(PRICE) + 6, T + 12, 'c_a + c_d = 0.014', { 'font-size': 11.5, fill: css('--back-ink') });
-  // diagonal
-  el('line', { x1: X(0), y1: Y(0), x2: X(y1), y2: Y(y1), stroke: css('--ink-2'), 'stroke-width': 1.2 }, svg);
-  txt(svg, X(0.022) - 6, Y(0.022) - 6, 'estimate = actual', { 'font-size': 11.5, fill: css('--ink-2'), 'text-anchor': 'end' });
-  // axis titles
-  txt(svg, L + pw / 2, H - 8, 'realized raw gain: +32 records and one window', { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
-  const yt = txt(svg, 16, T + ph / 2, "Claude's estimate", { 'font-size': 12, fill: css('--ink-2'), 'text-anchor': 'middle' });
-  yt.setAttribute('transform', `rotate(-90 16 ${T + ph / 2})`);
-  // points
-  PTS.forEach(([lab, id, act, est, ideal, choice]) => {
-    const g = el('g', {}, svg);
-    el('circle', { cx: X(act), cy: Y(est), r: 9, fill: 'transparent' }, g);
-    el('circle', { cx: X(act), cy: Y(est), r: 5, fill: css('--s1'), stroke: css('--chart'), 'stroke-width': 2 }, g);
-    bindTip(g, [[`actual ${act.toFixed(4)}`, lab, css('--s1')], [`estimate ${est.toFixed(4)}`, `Ref-G (extra prior) ${ideal.toFixed(4)} · chose ${choice.toLowerCase()} at c_d=0.012`, css('--s1')]]);
-  });
-  host.replaceChildren(svg);
-}
-function chart2(host) {
-  const W = 780, labW = 210, padR = 60, bh = 16, rg = 8, pg = 22, hh = 22, ph = hh + D2[0].rows.length * bh + (D2[0].rows.length - 1) * rg;
-  const H = 2 * ph + pg + 26, max = 0.025, xs = v => labW + v / max * (W - labW - padR);
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Matched-cost policies and elicited agent choices, by prompt condition' });
-  grid(svg, xs, hh - 4, H - 24, max, 0.005, H, 3);
-  D2.forEach((p, pi) => {
-    const y0 = pi * (ph + pg);
-    txt(svg, labW, y0 + 13, p.name, { 'font-size': 12.5, 'font-weight': 600, fill: css('--ink') });
-    el('line', { x1: labW, x2: labW, y1: y0 + hh - 4, y2: y0 + ph, stroke: css('--axis') }, svg);
-    p.rows.forEach(([name, v, best], ri) => {
-      const y = y0 + hh + ri * (bh + rg), c = best ? css('--s1') : css('--fixed'), hit = el('g', {}, svg);
-      txt(svg, labW - 10, y + bh / 2 + 4, name, { 'font-size': 12.5, fill: best ? css('--ink') : css('--ink-2'), 'text-anchor': 'end', 'font-weight': best ? 600 : 400 });
-      el('rect', { x: labW, y: y - 2, width: W - labW - padR, height: bh + 4, fill: 'transparent' }, hit);
-      hbar(hit, labW, y, xs(v) - labW, bh, c);
-      bindTip(hit, [[v.toFixed(4), `${name} · ${p.name}`, c]]);
-      txt(svg, xs(v) + 6, y + bh / 2 + 4, v.toFixed(4), { 'font-size': 11.5, fill: css('--ink-2'), 'font-variant-numeric': 'tabular-nums' });
-    });
-  });
-  host.replaceChildren(svg);
-}
-function table(host, head, rows) {
-  const t = document.createElement('table'); t.className = 'dt';
-  const hr = t.insertRow(); head.forEach(h => { const c = document.createElement('th'); c.textContent = h; hr.appendChild(c); });
-  rows.forEach(r => { const tr = t.insertRow(); r.forEach(v => { tr.insertCell().textContent = v; }); });
-  host.replaceChildren(t);
-}
-function draw() {
-  chart1(document.querySelector('#c1 .chart'));
-  table(document.querySelector('#c1 .tablewrap'), ['State', 'Raw realized gain', 'Raw estimated gain', 'Ref-G (extra prior)', 'Choice at c_d=0.012'], PTS.map(([lab, id, a, e, i, c]) => [`${lab} (${id})`, a.toFixed(4), e.toFixed(4), i.toFixed(4), c.toLowerCase()]));
-  chart2(document.querySelector('#c2 .chart'));
-  table(document.querySelector('#c2 .tablewrap'), ['Policy', 'No hint · 12 states', 'Hint · 12 states'], D2[0].rows.map((r, i) => [r[0], r[1].toFixed(4), D2[1].rows[i][1].toFixed(4)]));
-}
-document.querySelectorAll('.viewtable').forEach(b => b.addEventListener('click', () => {
-  const card = document.getElementById(b.dataset.for), tw = card.querySelector('.tablewrap'), ch = card.querySelector('.chart');
-  const toTable = tw.classList.contains('hidden');
-  tw.classList.toggle('hidden', !toTable); ch.classList.toggle('hidden', toTable); b.textContent = toTable ? 'chart' : 'table';
-}));
-const root = document.documentElement;
-if (matchMedia('(prefers-color-scheme: dark)').matches && !root.dataset.theme) root.dataset.theme = 'dark';
-document.getElementById('theme').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; draw(); };
-draw();
-</script>
-</body>
-</html>
+function render(){tip.hidden=true;const price=Number(byId('price').value),key='decision@'+String(price),condition=byId('condition').value,rows=data.rows.filter(r=>condition==='all'||r.run===condition);byId('filter-description').textContent=rows.length+' decision states from '+new Set(rows.map(r=>r.task_id)).size+' underlying scenarios. Data price '+fmt(price,3)+'; total SAMPLE cost '+fmt(price+data.analysis_cost,3)+'. '+(condition==='all'?'Both prompt/backend conditions are included.':'One prompt/backend condition is included.');renderScatter(rows,price,key);renderLoss(rows,price,key);}
+byId('price').addEventListener('change',render);byId('condition').addEventListener('change',render);let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(render,120);});updateDemo();render();
+</script></body></html>
